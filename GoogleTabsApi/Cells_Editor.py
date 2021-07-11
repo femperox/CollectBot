@@ -1,0 +1,86 @@
+import re
+
+from GoogleTabsApi.Styles.Borders import Borders as b
+
+def toRangeType(spId, range):
+    '''
+    Конвертирует диапозон ячеек в словарь
+
+    :param spId: айди листа в таблице
+    :param range: диапозон ячеек в формате "В1:С45" - пример
+    :return: возвращает словарь для json запроса
+    '''
+
+    rangeType = {}
+    rangeType["sheetId"] = spId
+
+    startCell, endCell = range.split(":")[0:2]
+
+    rangeType["startRowIndex"] = int(startCell[1:]) -1
+    rangeType["startColumnIndex"] = ord(startCell[0]) - ord('A')
+
+    rangeType["endRowIndex"] = endCell[1:]
+    rangeType["endColumnIndex"] = ord(endCell[0]) - ord('A') + 1
+
+    return rangeType
+
+def mergeCells(spId, range):
+    '''
+    подготовка json запроса для объединения ячеек таблицы по заданным параметрам
+
+    :param spId: айди листа в таблице
+    :param range: диапозон ячеек в формате "В1:С45" - пример
+    :return: возвращает json запрос
+    '''
+    request = {"mergeCells":
+                { "range" : toRangeType(spId, range),
+                  "mergeType": "MERGE_ALL"
+                }
+              }
+    return request
+
+def unmergeCells(spId, range):
+    '''
+    подготовка json запроса для разъединения ячеек таблицы по заданным параметрам
+
+    :param spId: айди листа в таблице
+    :param range: диапозон ячеек в формате "В1:С45" - пример
+    :return: возвращает json запрос
+    '''
+    request = {"unmergeCells": { "range": toRangeType(spId, range) } }
+    return request
+
+def setCellBorder(spId, range, all_same = True, only_outer = False, bstyleList = b.no_border):
+    '''
+    подготовка json запроса для обрамления диапозона ячеек границами с определёнными стилями
+
+    :param spId: айди листа в таблице
+    :param range: диапозон ячеек в формате "В1:С45" - пример
+    :param all_same: Применять ли ко всем сторонам ячейки одинаковый стиль границ. По умолчанию - да
+    :param bstyleList: Список стилей границ. По умолчанию - "без граниу"
+    :return: возвращает json запрос
+    '''
+
+    if not isinstance(bstyleList, list): bstyleList = [bstyleList]
+
+    if len(bstyleList) < 6:
+        bstyleList = bstyleList + [b.no_border]*(4-len(bstyleList))
+
+    if all_same:
+        bstyleList = [bstyleList[0]]*6
+
+    if only_outer:
+        bstyleList[4] = b.no_border
+        bstyleList[5] = b.no_border
+
+    request = {"updateBorders":
+                { "range" : toRangeType(spId, range),
+                  "top": bstyleList[0],
+                  "bottom": bstyleList[1],
+                  "left": bstyleList[2],
+                  "right": bstyleList[3],
+                  "innerHorizontal": bstyleList[4],
+                  "innerVertical": bstyleList[5]
+                }
+              }
+    return request

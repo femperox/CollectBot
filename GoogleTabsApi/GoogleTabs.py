@@ -44,6 +44,6 @@ if __name__ == '__main__':
 
     #pprint(ss.spreadsheetsIds)
 
-    results = service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body={"requests": ss.prepareLot(sheetList, 158683993)}).execute()
+    results = service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body={"requests": ss.prepareLot(sheetList, 158683993, participants= 10)}).execute()
 
 

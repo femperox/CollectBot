@@ -1,5 +1,6 @@
 import GoogleTabsApi.Cells_Editor as ce
 from GoogleTabsApi.Styles.Borders import Borders as b
+from GoogleTabsApi.Styles.Colors import Colors as c
 
 class Lots():
 
@@ -12,6 +13,7 @@ class Lots():
    self.spreadsheetsIds['Dasha_rf'] = (sheetList[5]['properties']['sheetId'], 5)
    self.spreadsheetsIds['Dasha_arc'] = (sheetList[6]['properties']['sheetId'], 6)
    self.spreadsheetsIds['Test'] = (sheetList[8]['properties']['sheetId'], 8)
+
 
  def findFreeRaw(self, sheetList, spId):
      '''
@@ -52,6 +54,13 @@ class Lots():
     startParticipantRow = startLotRow + 14
     summaryRow = startParticipantRow + participants
 
+    # стили ячеек
+    request.append(ce.repeatCells(spId, "A{0}:G{1}".format(startLotRow, summaryRow), c.white))
+    request.append(ce.repeatCells(spId, "H{0}:I{1}".format(startLotRow, startLotRow + 2), c.white))
+    request.append(ce.repeatCells(spId, "A{0}:C{0}".format(startLotRow), c.light_purple))
+    request.append(ce.repeatCells(spId, "A{0}:C{0}".format(summaryRow), c.light_purple))
+
+    # объдинение ячеек
     request.append(ce.mergeCells(spId, "A{0}:B{0}".format(startLotRow)))
     request.append(ce.mergeCells(spId, "D{0}:D{1}".format(startLotRow, startLotRow+13)))
     request.append(ce.mergeCells(spId, "E{0}:E{1}".format(startLotRow, startLotRow+13)))
@@ -63,7 +72,10 @@ class Lots():
 
     for i in range(participants):
         request.append(ce.mergeCells(spId, "B{0}:C{0}".format(startParticipantRow+i)))
+        request.append(ce.repeatCells(spId, "D{0}:E{0}".format(startParticipantRow+i), c.light_red))
+        request.append(ce.repeatCells(spId, "G{0}:G{0}".format(startParticipantRow + i), c.light_red))
 
+    # границы ячеек
     request.append(ce.setCellBorder(spId, "A{0}:G{1}".format(startLotRow, summaryRow), bstyleList=b.plain_black))
     request.append(ce.setCellBorder(spId, "H{0}:I{1}".format(startLotRow, startLotRow+2), bstyleList=b.plain_black))
     request.append(ce.setCellBorder(spId, "H{0}:I{1}".format(startLotRow+3, summaryRow), only_outer= True, bstyleList=b.plain_black))

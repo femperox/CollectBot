@@ -24,6 +24,25 @@ def toRangeType(spId, range):
 
     return rangeType
 
+def toUserEnteredFormat(color, hali = 'CENTER', vali = 'MIDDLE', textFormat = 'True'):
+    '''
+    составляет словарь стиля ячейки
+
+    :param color: цвет
+    :param hali: вертикальное выравнивание
+    :param vali: горизонтальное выравнивание
+    :param textFormat: формат текста
+    :return: возвращает словарь для json запроса
+    '''
+    userEnteredFormat = {}
+
+    userEnteredFormat['horizontalAlignment'] = hali
+    userEnteredFormat['verticalAlignment'] = vali
+    userEnteredFormat['textFormat'] = {'bold': textFormat}
+    userEnteredFormat["backgroundColor"] = color
+
+    return userEnteredFormat
+
 def mergeCells(spId, range):
     '''
     подготовка json запроса для объединения ячеек таблицы по заданным параметрам
@@ -83,4 +102,24 @@ def setCellBorder(spId, range, all_same = True, only_outer = False, bstyleList =
                   "innerVertical": bstyleList[5]
                 }
               }
+    return request
+
+def repeatCells(spId, range, color):
+    '''
+    подготовка json запроса для оформления диапозона ячеек определённым стилем
+
+    :param spId: айди листа в таблице
+    :param range: диапозон ячеек в формате "В1:С45" - пример
+    :param color: цвет ячейки
+    :return: возвращает json запрос
+    '''
+
+    request = { "repeatCell":
+                { "range": toRangeType(spId, range),
+                  "cell": { "userEnteredFormat": toUserEnteredFormat(color) },
+                  "fields": "userEnteredFormat"
+                }
+
+    }
+
     return request

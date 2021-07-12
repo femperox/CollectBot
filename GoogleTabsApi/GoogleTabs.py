@@ -19,20 +19,6 @@ service = discovery.build('sheets', 'v4', http = httpAuth)
 # id гугл таблицы
 spreadsheet_id = '1A9cULhz1UAE0OWpIZ7q056NvCJj8d3Ju6C1nq2hElKc'
 
-def Init():
-    spreadsheet = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
-    sheetList = spreadsheet.get('sheets')
-
-    get = service.spreadsheets().values().batchGet(spreadsheetId=spreadsheet_id,
-                                                   ranges="Дашины лоты!D1:D14",
-                                                   valueRenderOption='FORMULA',
-                                                   dateTimeRenderOption='FORMATTED_STRING').execute()
-
-    pprint(sheetList)
-
-    get = service.spreadsheets().get(spreadsheetId=spreadsheet_id, ranges="Дашины лоты!D1:D14", includeGridData = True).execute()
-
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     # TESTING
     spreadsheet = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
@@ -40,10 +26,7 @@ if __name__ == '__main__':
 
     ss = ls.Lots(sheetList)
 
-    ss.findFreeRaw(sheetList, 158683993)
-
     #pprint(ss.spreadsheetsIds)
 
-    results = service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body={"requests": ss.prepareLot(sheetList, 158683993, participants= 10)}).execute()
-
-
+    results = service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body={"requests": ss.prepareLot(sheetList, 158683993, participants= 1)}).execute()
+    results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheet_id, body= ss.prepareBody(ss.spreadsheetsIds["Test"][0])).execute()

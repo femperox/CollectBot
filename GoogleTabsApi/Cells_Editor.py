@@ -40,6 +40,7 @@ def toUserEnteredFormat(color, hali = 'CENTER', vali = 'MIDDLE', textFormat = 'T
     userEnteredFormat['verticalAlignment'] = vali
     userEnteredFormat['textFormat'] = {'bold': textFormat}
     userEnteredFormat["backgroundColor"] = color
+    userEnteredFormat["wrapStrategy"] = "LEGACY_WRAP"
 
     return userEnteredFormat
 
@@ -104,7 +105,7 @@ def setCellBorder(spId, range, all_same = True, only_outer = False, bstyleList =
               }
     return request
 
-def repeatCells(spId, range, color):
+def repeatCells(spId, range, color, hali = "CENTER"):
     '''
     подготовка json запроса для оформления диапозона ячеек определённым стилем
 
@@ -116,10 +117,29 @@ def repeatCells(spId, range, color):
 
     request = { "repeatCell":
                 { "range": toRangeType(spId, range),
-                  "cell": { "userEnteredFormat": toUserEnteredFormat(color) },
+                  "cell": { "userEnteredFormat": toUserEnteredFormat(color, hali = hali) },
                   "fields": "userEnteredFormat"
                 }
 
     }
 
     return request
+
+def insertValue(spId, range, text ="", majorDime = "ROWS"):
+    '''
+    подготовка json запроса для заполнения ячеек заданным текстом
+
+    :param spId: айди листа в таблице
+    :param range: диапозон ячеек в формате "НазваниеЛиста!В1:С45" - пример
+    :param text: текст ячейки
+    :param majorDime: формат заполнения ячеек
+    :return: возвращает json запрос
+    '''
+
+    data = {}
+
+    data["range"] = range
+    data["majorDimension"] = majorDime
+    data["values"] = [[text]]
+
+    return data

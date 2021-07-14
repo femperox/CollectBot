@@ -11,13 +11,17 @@ class Lots():
 
  def __init__(self, sheetList):
 
-   self.spreadsheetsIds['Lera'] = (sheetList[0]['properties']['sheetId'], sheetList[0]['properties']['index'], sheetList[0]['properties']['title'])
-   self.spreadsheetsIds['Dasha_lot'] = (sheetList[3]['properties']['sheetId'], sheetList[3]['properties']['index'], sheetList[3]['properties']['title'])
-   self.spreadsheetsIds['Dasha_ind'] = (sheetList[4]['properties']['sheetId'], sheetList[4]['properties']['index'], sheetList[4]['properties']['title'])
-   self.spreadsheetsIds['Dasha_rf'] = (sheetList[5]['properties']['sheetId'], sheetList[5]['properties']['index'], sheetList[5]['properties']['title'])
-   self.spreadsheetsIds['Dasha_arc'] = (sheetList[6]['properties']['sheetId'], sheetList[6]['properties']['index'], sheetList[6]['properties']['title'])
-   self.spreadsheetsIds['Test'] = (sheetList[8]['properties']['sheetId'], sheetList[8]['properties']['index'], sheetList[8]['properties']['title'])
-
+   '''
+   for i in range(len(sheetList)):
+       self.spreadsheetsIds[sheetList[i]['properties']['title']] = (sheetList[i]['properties']['sheetId'], sheetList[i]['properties']['index'], sheetList[i]['properties']['title'])
+   '''
+   self.spreadsheetsIds[sheetList[0]['properties']['title']] = (sheetList[0]['properties']['sheetId'], sheetList[0]['properties']['index'])
+   self.spreadsheetsIds[sheetList[3]['properties']['title']] = (sheetList[3]['properties']['sheetId'], sheetList[3]['properties']['index'])
+   self.spreadsheetsIds[sheetList[4]['properties']['title']] = (sheetList[4]['properties']['sheetId'], sheetList[4]['properties']['index'])
+   self.spreadsheetsIds[sheetList[5]['properties']['title']] = (sheetList[5]['properties']['sheetId'], sheetList[5]['properties']['index'])
+   self.spreadsheetsIds[sheetList[6]['properties']['title']] = (sheetList[6]['properties']['sheetId'], sheetList[6]['properties']['index'])
+   self.spreadsheetsIds[sheetList[8]['properties']['title']] = (sheetList[8]['properties']['sheetId'], sheetList[8]['properties']['index'])
+   self.spreadsheetsIds[sheetList[9]['properties']['title']] = (sheetList[9]['properties']['sheetId'], sheetList[9]['properties']['index'])
 
  def findFreeRaw(self, sheetList, spId):
      '''
@@ -31,6 +35,7 @@ class Lots():
      spIds = list(self.spreadsheetsIds.items())
 
      sheetId = 0
+
      for i in range(len(spIds)):
          if spIds[i][1][0] == spId:
             sheetId = spIds[i][1][1]
@@ -43,8 +48,22 @@ class Lots():
      except:
          return 1
 
+ def findName(self, spId):
+     '''
+     Поиск имени листа по его айди
 
- def prepareLot(self, sheetList, spId, participants = 1):
+     :param spId: айди листа в таблице
+     :return: возвращает строчку-имя
+     '''
+
+     spItems = list(self.spreadsheetsIds.items())
+
+     for i in range(len(spItems)):
+         if spItems[i][1][0] == spId:
+             return spItems[i][0]
+
+
+ def prepareLot(self, sheetList, spId, participants = 1, rangeName = ""):
     '''
      подготовка json запроса для создания таблицы лота
 
@@ -88,6 +107,8 @@ class Lots():
     request.append(ce.setCellBorder(spId, "H{0}:I{1}".format(self.startLotRow, self.startLotRow+2), bstyleList=b.plain_black))
     request.append(ce.setCellBorder(spId, "H{0}:I{1}".format(self.startLotRow+3, self.summaryRow), only_outer= True, bstyleList=b.plain_black))
 
+    request.append(ce.addNamedRange(spId, "A{0}:I{1}".format(self.startLotRow, self.summaryRow), rangeName))
+
     return request
 
  def prepareValues(self, spId, collectNum = 0, collectName = "Коллективка"):
@@ -104,13 +125,7 @@ class Lots():
 
      participants = self.summaryRow - self.startParticipantRow
 
-     # Поиск названия листа
-     spItems = list(self.spreadsheetsIds.items())
-     sheetTitle = ""
-     for i in range(len(spItems)):
-         if spItems[i][1][0] == spId:
-             sheetTitle = spItems[i][1][2]
-             break
+     sheetTitle = self.findName(spId)
 
      ran = sheetTitle +"!A{0}:B{0}".format(self.startLotRow)
      data.append(ce.insertValue(spId, ran, "{1} №{0}   Трек:".format(collectNum, collectName)))
@@ -169,3 +184,35 @@ class Lots():
      body["data"] = self.prepareValues(spId)
 
      return body
+
+
+ def changeList(self, sheetList, newSpId, collectId, collectNamedRange):
+     '''
+     Перемещение таблицы с одного листа на другой
+
+     :param sheetList: Список свойств листов таблицы
+     :param newSpId: айди листа в таблице, куда нужно перенести таблицу
+     :param collectId: имя именованного диапозона, совпадающего с именем коллективки
+     :param collectNamedRange: именованный диапозон в формате "В1:С45" - пример
+     :return: возвращает json запрос
+     '''
+
+     newRange = "A{0}".format(self.findFreeRaw(sheetList, newSpId))
+
+     oldSheetTitle, oldRange = collectNamedRange.split("!")
+
+     oldSpId = self.spreadsheetsIds[oldSheetTitle][0]
+
+     request = []
+
+     request.append(ce.CutPasteRange(oldSpId, oldRange, newRange, newSpId))
+     request.append(ce.deleteNamedRange(collectId))
+     request.append(ce.deleteRange(oldSpId, oldRange))
+
+     convertedRange = oldRange.split(":")
+     convertedRange = int(convertedRange[1][1:]) - int(convertedRange[0][1:]) + int(newRange[1:])
+     newRange += ':I{0}'.format(convertedRange)
+
+     request.append(ce.addNamedRange(newSpId, newRange, collectId))
+
+     return request

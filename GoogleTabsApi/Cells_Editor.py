@@ -2,6 +2,7 @@ import re
 
 from GoogleTabsApi.Styles.Borders import Borders as b
 
+
 def toRangeType(spId, range):
     '''
     Конвертирует диапозон ячеек в словарь
@@ -14,15 +15,20 @@ def toRangeType(spId, range):
     rangeType = {}
     rangeType["sheetId"] = spId
 
-    startCell, endCell = range.split(":")[0:2]
+    try: # Формат *#:*#
+      startCell, endCell = range.split(":")[0:2]
 
-    rangeType["startRowIndex"] = int(startCell[1:]) -1
-    rangeType["startColumnIndex"] = ord(startCell[0]) - ord('A')
+      rangeType["startRowIndex"] = int(startCell[1:]) -1
+      rangeType["startColumnIndex"] = ord(startCell[0]) - ord('A')
 
-    rangeType["endRowIndex"] = endCell[1:]
-    rangeType["endColumnIndex"] = ord(endCell[0]) - ord('A') + 1
+      rangeType["endRowIndex"] = endCell[1:]
+      rangeType["endColumnIndex"] = ord(endCell[0]) - ord('A') + 1
+    except: # Формат *#
+      rangeType["rowIndex"] = int(range[1:]) -1
+      rangeType["columnIndex"] = ord(range[0]) - ord('A')
 
     return rangeType
+
 
 def toUserEnteredFormat(color, hali = 'CENTER', vali = 'MIDDLE', textFormat = 'True'):
     '''
@@ -44,6 +50,7 @@ def toUserEnteredFormat(color, hali = 'CENTER', vali = 'MIDDLE', textFormat = 'T
 
     return userEnteredFormat
 
+
 def mergeCells(spId, range):
     '''
     подготовка json запроса для объединения ячеек таблицы по заданным параметрам
@@ -59,6 +66,7 @@ def mergeCells(spId, range):
               }
     return request
 
+
 def unmergeCells(spId, range):
     '''
     подготовка json запроса для разъединения ячеек таблицы по заданным параметрам
@@ -69,6 +77,7 @@ def unmergeCells(spId, range):
     '''
     request = {"unmergeCells": { "range": toRangeType(spId, range) } }
     return request
+
 
 def setCellBorder(spId, range, all_same = True, only_outer = False, bstyleList = b.no_border):
     '''
@@ -105,6 +114,7 @@ def setCellBorder(spId, range, all_same = True, only_outer = False, bstyleList =
               }
     return request
 
+
 def repeatCells(spId, range, color, hali = "CENTER"):
     '''
     подготовка json запроса для оформления диапозона ячеек определённым стилем
@@ -124,6 +134,86 @@ def repeatCells(spId, range, color, hali = "CENTER"):
     }
 
     return request
+
+
+def deleteRange(spId, range):
+    '''
+    Удаление заданного диапозона ячеек из таблиуы
+
+    :param spId: айди листа в таблице
+    :param range: диапозон ячеек в формате "В1:С45" - пример
+    :return: возвращает json запрос
+    '''
+
+    request = { "deleteRange":
+                { "range" : toRangeType(spId, range),
+                  "shiftDimension" : "ROWS"
+                }
+              }
+
+    return request
+
+
+def CutPasteRange(spId, range, newRange, newSpId = None):
+    '''
+    Вставка диапозона ячеек из одного места в другое
+
+    :param spId: айди листа в таблице
+    :param range: диапозон ячеек в формате "В1:С45" - пример
+    :param newRange: новый диапозон ячеек
+    :param newSpId: новый айди листа в таблице
+    :return: возвращает json запрос
+    '''
+
+    if newSpId is None:
+        newSpId = spId
+
+    request = { "cutPaste":
+                { "source": toRangeType(spId, range),
+                  "destination": toRangeType(newSpId, newRange),
+                  "pasteType": "PASTE_NORMAL"
+                }
+              }
+
+    return request
+
+
+def addNamedRange(spId, range, name):
+    '''
+    Добавляет именнованный диапозон по заданным параметрам
+
+    :param spId: айди листа в таблице
+    :param range: диапозон ячеек в формате "В1:С45" - пример
+    :param name: имя диапозона
+    :return: возвращает json запрос
+    '''
+
+    request = {"addNamedRange":
+                   {  "namedRange":
+                      {  "namedRangeId": name,
+                         "name": name,
+                         "range": toRangeType(spId,range)
+                      }
+                   }
+               }
+    return request
+
+
+def deleteNamedRange(name):
+    '''
+    Удаляет именованный диапозон по заданному имени
+
+    :param name: имя диапозона
+    :return: возвращает json запрос
+    '''
+
+
+    request = {"deleteNamedRange":
+                   {"namedRangeId": name}
+              }
+
+    return request
+
 
 def insertValue(spId, range, text ="", majorDime = "ROWS"):
     '''

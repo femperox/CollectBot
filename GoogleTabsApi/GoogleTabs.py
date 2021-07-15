@@ -28,23 +28,61 @@ def getJsonNamedRange(namedRange):
     '''
     try:
         result = service.spreadsheets().values().get(spreadsheetId=spreadsheet_id, range=namedRange).execute()
-        print(result)
     except :
         result = {"range": -1}
     return result["range"]
 
+def getSheetListProperties():
+    '''
+
+    :return:
+    '''
+
+    spreadsheet = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
+    return spreadsheet.get('sheets')
+
+def createTable(spId, namedRange, participants = 1):
+    service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id,
+                                       body={"requests": ss.prepareLot(getSheetListProperties(), spId, participants=participants, rangeName=namedRange)}).execute()
+
+    service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheet_id,
+                                                body=ss.prepareBody(spId)).execute()
+
+def updateTable(namedRange, request):
+
+    service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id,
+                                       body={"requests": ss.updateLot(getJsonNamedRange(namedRange), request["participants"])}).execute()
+
+    service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheet_id,
+                                                body=ss.updateValues(getJsonNamedRange(namedRange),request["participantList"])).execute()
+
+def testingCreation(spId, namedRange, lots = 1):
+
+    for i in range(lots):
+        createTable(spId, namedRange + str(i+1), i+1)
+
 if __name__ == '__main__':
     # TESTING
-    spreadsheet = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
-    sheetList = spreadsheet.get('sheets')
 
-    ss = ls.Lots(sheetList)
+    ss = ls.Lots(getSheetListProperties())
 
     #pprint(ss.spreadsheetsIds)
 
-    range_name = "DCollect1"
+    range_name = "DCollect"
+    #testingCreation(158683993, range_name, 3)
 
-    #results = service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body={"requests": ss.prepareLot(sheetList, 158683993, participants= 1, rangeName = range_name)}).execute()
-    #results = service.spreadsheets().values().batchUpdate(spreadsheetId=spreadsheet_id, body= ss.prepareBody(ss.spreadsheetsIds["TestList"][0])).execute()
+    pList = []
+    pList.append(([1, 2], "Name1"))
+    pList.append(([3], "Name2"))
 
-    result = service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body={"requests": ss.changeList(sheetList, 662031387, range_name, getJsonNamedRange(range_name))}).execute()
+    request = \
+        { "participants" : 2,
+          "participantList": pList
+        }
+
+    r = "DCollect3"
+
+    updateTable(r, request)
+
+
+    #result = service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body={"requests": ss.changeList(getSheetListProperties(), 662031387, r, getJsonNamedRange(r))}).execute()

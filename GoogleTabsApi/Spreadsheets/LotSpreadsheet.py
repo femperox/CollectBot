@@ -207,12 +207,63 @@ class Lots():
 
      request.append(ce.CutPasteRange(oldSpId, oldRange, newRange, newSpId))
      request.append(ce.deleteNamedRange(collectId))
-     request.append(ce.deleteRange(oldSpId, oldRange))
 
      convertedRange = oldRange.split(":")
+
+     # Удаляем со старого места таблицу и пустую строку под ней
+     oldRangeWithBlankRow = convertedRange[0] +":" + convertedRange[1][0] + str( int(convertedRange[1][1:])+1)
+     request.append(ce.deleteRange(oldSpId, oldRangeWithBlankRow))
+
+     # Сопостовление индексов для нового места
      convertedRange = int(convertedRange[1][1:]) - int(convertedRange[0][1:]) + int(newRange[1:])
      newRange += ':I{0}'.format(convertedRange)
 
      request.append(ce.addNamedRange(newSpId, newRange, collectId))
 
      return request
+
+ def updateLot(self, collectNamedRange, participants):
+
+     request = []
+
+     sheetTitle, range = collectNamedRange.split("!")
+     spId = self.spreadsheetsIds[sheetTitle][0]
+
+     range = range.split(":")
+
+     self.startParticipantRow = int(range[0][1:]) + 14
+     rowsAmount = int(range[1][1:]) - self.startParticipantRow
+
+     if participants < rowsAmount:
+        rangeToDelete = "A{0}:I{1}".format( self.startParticipantRow + participants, int(range[1][1:])-1 )
+        print(rangeToDelete)
+        request.append(ce.deleteRange(spId, rangeToDelete))
+
+     return request
+
+ def listToString(self, list):
+
+    itemString = ""
+
+    for i in range(len(list)):
+        itemString += str(list[i])+", "
+
+    return itemString[:-2]
+
+
+ def updateValues(self, collectNamedRange, participantsInfo):
+
+     data = []
+     sheetTitle, rangeParticipants = collectNamedRange.split("!")
+     spId = self.spreadsheetsIds[sheetTitle][0]
+     #??????????????????????????????????????????????????????????????
+     for i in range(len(participantsInfo)):
+         ran = sheetTitle + "A{0}".format(self.startParticipantRow+i)
+         data.append(ce.insertValue(spId, ran, self.listToString(participantsInfo[i][0]) ) )
+         ran = ran.replace('A', 'B', 1)
+         data.append(ce.insertValue(spId, ran, participantsInfo[i][1] ) )
+
+     return data
+
+
+

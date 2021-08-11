@@ -131,7 +131,7 @@ class Lots():
      return collectType, collectNum
 
 
- def prepareValues(self, spId, collect = ""):
+ def prepareValues(self, spId, image, collect = ""):
      '''
      подготовка блока data в json-запросе для заполнения таблицы значениями
 
@@ -145,6 +145,7 @@ class Lots():
      data = []
 
      participants = self.summaryRow - self.startParticipantRow
+
 
      sheetTitle = self.findName(spId)
 
@@ -186,11 +187,16 @@ class Lots():
      ran = sheetTitle + "!A{0}".format(self.summaryRow)
      data.append(ce.insertValue(spId, ran, words[-1]))
 
+     # Изображение лота
+     ran = sheetTitle + "!A{0}".format(self.startLotRow+1)
+     image = '=IMAGE("{0}")'.format(image)
+     data.append(ce.insertValue(spId, ran, image))
+
      return data
 
 
 
- def prepareBody(self, spId, collect = ""):
+ def prepareBody(self, spId, image, collect = ""):
      '''
      подготовка json запроса для заполнения таблицы лота информауией
 
@@ -201,7 +207,7 @@ class Lots():
 
      body = {}
      body["valueInputOption"] = "USER_ENTERED"
-     body["data"] = self.prepareValues(spId, collect)
+     body["data"] = self.prepareValues(spId, image, collect)
 
      return body
 

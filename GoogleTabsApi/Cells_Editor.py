@@ -1,5 +1,3 @@
-import re
-
 from GoogleTabsApi.Styles.Borders import Borders as b
 
 

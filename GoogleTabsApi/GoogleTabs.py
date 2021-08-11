@@ -45,7 +45,7 @@ def getSheetListProperties():
         :return: Возвращает информацию о листах
         '''
 
-        spreadsheet = service.spreadsheets().get(spreadsheetId=self.spreadsheet_id).execute()
+        spreadsheet = service.spreadsheets().get(spreadsheetId = spreadsheet_id).execute()
         return spreadsheet.get('sheets')
 
 def getImageURLFromNamedRange(namedRange):
@@ -103,7 +103,7 @@ def moveTable(sheetTo, namedRange):
         '''
 
         service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id,
-                                           body={ "requests": ss.changeList(getSheetListProperties(), sheetTo, namedRange, self.getJsonNamedRange(namedRange))}).execute()
+                                           body={ "requests": ss.changeList(getSheetListProperties(), sheetTo, namedRange, getJsonNamedRange(namedRange))}).execute()
 
 def testingCreation(spId, namedRange, lots = 1):
 

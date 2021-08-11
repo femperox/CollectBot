@@ -1,6 +1,7 @@
 import GoogleTabsApi.Cells_Editor as ce
 from GoogleTabsApi.Styles.Borders import Borders as b
 from GoogleTabsApi.Styles.Colors import Colors as c
+import re
 
 class Lots():
 
@@ -111,15 +112,35 @@ class Lots():
 
     return request
 
- def prepareValues(self, spId, collectNum = 0, collectName = "Коллективка"):
+ def defineCollectType(self, collect):
+     '''
+     Определяет тип коллективки. Т.е. её номер и (коллективка/индивидуалка)
+
+     :param collect: название именованного диапозона
+     :return: возвращает тип коллекта и его номер
+     '''
+
+     try:
+        collectType, collectNum = re.split(r"\d", collect, 1)
+        collectNum = collect[len(collectType)] + collectNum
+     except:
+         collectType = collect
+         collectNum = 0
+     collectType = "Коллективка" if collectType.find("Collect")>=0 else "Индивидуалка"
+
+     return collectType, collectNum
+
+
+ def prepareValues(self, spId, collect = ""):
      '''
      подготовка блока data в json-запросе для заполнения таблицы значениями
 
      :param spId: айди листа в таблице
-     :param collectNum: номер коллективки
-     :param collectName: название коллективки (Коллективка/Индивидуалка)
+     :param collect: название именованного диапозона
      :return: возвращает часть json запроса
      '''
+
+     collectType, collectNum = self.defineCollectType(collect)
 
      data = []
 
@@ -128,7 +149,7 @@ class Lots():
      sheetTitle = self.findName(spId)
 
      ran = sheetTitle +"!A{0}:B{0}".format(self.startLotRow)
-     data.append(ce.insertValue(spId, ran, "{1} №{0}   Трек:".format(collectNum, collectName)))
+     data.append(ce.insertValue(spId, ran, "{1} №{0}   Трек:".format(collectNum, collectType)))
 
      words = ["Позиция (с налогом)", "Доставка по Япе", "Доставка до РФ", "Задолжность",
               "Вес лота:", "Беседа лота:", "Лот в обсуждении:", "СУММАРНО"]
@@ -169,19 +190,18 @@ class Lots():
 
 
 
- def prepareBody(self, spId, collectNum = 0, collectName = "Коллективка"):
+ def prepareBody(self, spId, collect = ""):
      '''
      подготовка json запроса для заполнения таблицы лота информауией
 
      :param spId: айди листа в таблице
-     :param collectNum: номер коллективки
-     :param collectName: название коллективки (Коллективка/Индивидуалка)
+     :param collect: название именованного диапозона
      :return: возвращает json запрос
      '''
 
      body = {}
      body["valueInputOption"] = "USER_ENTERED"
-     body["data"] = self.prepareValues(spId)
+     body["data"] = self.prepareValues(spId, collect)
 
      return body
 
@@ -222,7 +242,14 @@ class Lots():
 
      return request
 
- def updateLot(self, collectNamedRange, participants):
+ def updateBaseOfLot(self, collectNamedRange, participants):
+     '''
+     Обновление таблицы в соотвествии с количеством участников коллективки
+
+     :param collectNamedRange: именованный диапозон в формате "В1:С45" - пример
+     :param participants: количество участников
+     :return: возвращает json запрос
+     '''
 
      request = []
 
@@ -242,6 +269,12 @@ class Lots():
      return request
 
  def listToString(self, list):
+    '''
+    Переводит список в строчку в формате "x, y, z"
+
+    :param list: список
+    :return: возвращает строку
+    '''
 
     itemString = ""
 
@@ -251,19 +284,30 @@ class Lots():
     return itemString[:-2]
 
 
- def updateValues(self, collectNamedRange, participantsInfo):
+ def updateBaseValues(self, collectNamedRange, participantsInfo):
+     '''
+     Обновляет значения ячеек: позиции, участники
+
+     :param collectNamedRange: именованный диапозон в формате "В1:С45" - пример
+     :param participantsInfo: список с инфой об участнике и его позициях
+     :return: возвращает json запрос
+     '''
+
+     body = {}
+     body["valueInputOption"] = "USER_ENTERED"
 
      data = []
      sheetTitle, rangeParticipants = collectNamedRange.split("!")
      spId = self.spreadsheetsIds[sheetTitle][0]
-     #??????????????????????????????????????????????????????????????
+
      for i in range(len(participantsInfo)):
-         ran = sheetTitle + "A{0}".format(self.startParticipantRow+i)
+         ran = sheetTitle + "!A{0}".format(self.startParticipantRow+i)
          data.append(ce.insertValue(spId, ran, self.listToString(participantsInfo[i][0]) ) )
          ran = ran.replace('A', 'B', 1)
          data.append(ce.insertValue(spId, ran, participantsInfo[i][1] ) )
 
-     return data
+     body["data"] = data
+     return body
 
 
 

@@ -167,9 +167,55 @@ class BoardBot:
         except:
             print_exc()
             return ''
+    
+    def get_active_comments_users_list(self, post_url: str) -> tuple:
+        """Получает список ссылок на страницы пользователей, прокомментировавших пост
+
+        Args:
+            post_url (str): Ссылка на пост
+
+        Returns:
+            tuple: Возвращает кортеж из списка пользователей и ссылки на пост
+        """
+        counter = 1
+        try:
+            post_id = int(post_url[post_url.rfind('_') + 1:])
+            admin_ids = set([contact['user_id'] for contact in self.vk.groups.getById(
+                    group_ids=self.__group_id, 
+                    fields='contacts'
+            )[0]['contacts']])
+            user_ids = set()
+            commentators = []
+            last_comment_id = -1
+            while (counter == 1 or len(commentators)):
+                params = {
+                    'owner_id': -int(self.__group_id),
+                    'post_id': post_id,
+                    'count': 100,
+                    'extended': 1,
+                    'fields': 'id'
+                }
+                if counter > 1:
+                    params.setdefault('start_comment_id', last_comment_id)
+                    params.setdefault('offset', 1)
+                commentators = self.vk.wall.getComments(**params).get('profiles', [])
+                counter += 1
+                for comm in commentators:
+                    if comm['id'] > 0 and comm['id'] not in admin_ids:
+                        user_ids.add(comm['id'])
+                if commentators != []:
+                    last_comment_id = commentators[len(commentators) - 1]['id']
+            result = []
+            for user_id in user_ids:
+                result.append('https://vk.com/id' + str(user_id))
+            return result, post_url
+        except:
+            print_exc()
+            return [], post_url
 
 
 # b = BoardBot()
+# pprint(b.get_active_comments_users_list('https://vk.com/public195146403?w=wall-195146403_9'))
 # # b.post_comment(b.get_topic_id(), ')))))', img_urls=[
 # #     # 'https://images.ru.prom.st/816121682_w640_h640_yakortsy-stelyuschiesya-tribulus-trava.jpg',
 # #     # 'https://lh3.googleusercontent.com/proxy/FaN_imi61_6uGs5GaMPLqKaw-ikTX1SCAQdhaV5tEnSUK0-21eRs07lLXyQiw4L0IDsbGplstzjC64it6bq_dTICsnzV6XiFOIKLrXL4rfqWM9cl4TsQNmyKb6Q'

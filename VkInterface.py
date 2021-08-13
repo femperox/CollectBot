@@ -109,22 +109,38 @@ class BoardBot:
                 result[:len(result) - 1:]
         return result
 
-    def get_topic_id(self): # Временное явление
-        return self.__topic_id
-    
-    def post_comment(self, topic_id: int, message: str, from_group=1, img_urls=[]) -> int:
-        """Запостить комментарий в обсуждение
-
+    def _get_topic_by_name(self, topic_name: str) -> int:
+        """
         Args:
-            topic_id (int): ID топика
-            message (str): Текст комментария
-            from_group (int, optional): От имени группы - 1 (по умолчанию), от имени владельца ключа доступа - 0
-            img_urls (list, optional): Список url-ссылок на прикладываемые изображения. По умолчанию пустой список
+            topic_name (str): Название обсуждения
 
         Returns:
-            int: Возвращает ID созданного комментария в случае успеха и -1 в иных случаях
+            int: ID обсуждения с именем topic_name или -1
         """
         try:
+            vk_response = self.vk.board.getTopics(group_id=self.__group_id, preview_length=0)
+            topics = vk_response.get('items', [])
+            for topic in topics:
+                if topic['title'] == topic_name:
+                    return topic['id']
+        except:
+            return -1
+    
+    def post_comment(self, topic_name: str, message: str, comment_url='', from_group=1, img_urls=[]) -> str:
+        """Позволяет создать или изменить комментарий в обсуждении. Для изменения нужно передать ссылку на комментарий
+
+        Args:
+            topic_name (str): Название обсуждения
+            message (str): Текст комментария
+            comment_url (str, optional): url комментария в обсуждении. Передаётся в случае изменения. По умолчанию = ''
+            from_group (int, optional): От имени кого будет опубликована запись. 1 - от сообщества, 0 - от имени пользователя. По умолч. = 1
+            img_urls (list, optional): Список url картинок, которые необходимо прикрепить. По умолчанию = [].
+
+        Returns:
+            str: Возвращает url созданного / изменённого комментария
+        """
+        try:
+            topic_id = self._get_topic_by_name(topic_name)
             params = {
                 'group_id': self.__group_id,
                 'topic_id': topic_id,
@@ -135,15 +151,30 @@ class BoardBot:
             attachments = self._form_images_request_signature(img_urls)
             if attachments != '':
                 params.setdefault('attachments', attachments)
-            comm_id = self.vk.board.createComment(**params)
-            return comm_id
+            
+            if comment_url == '':
+                comm_id = self.vk.board.createComment(**params)
+            else:
+                params.pop('guid')
+                params.pop('from_group')
+                comm_id = int(comment_url[comment_url.find('post=') + 5:])
+                params.setdefault('comment_id', comm_id)
+                if not self.vk.board.editComment(**params):
+                    return ''
+        
+            res_url = 'https://vk.com/topic-{}_{}?post={}'.format(self.__group_id, topic_id, comm_id)
+            return res_url
         except:
             print_exc()
-            return -1
+            return ''
 
-b = BoardBot()
-b.post_comment(b.get_topic_id(), ')))))', img_urls=[
-    # 'https://images.ru.prom.st/816121682_w640_h640_yakortsy-stelyuschiesya-tribulus-trava.jpg',
-    # 'https://lh3.googleusercontent.com/proxy/FaN_imi61_6uGs5GaMPLqKaw-ikTX1SCAQdhaV5tEnSUK0-21eRs07lLXyQiw4L0IDsbGplstzjC64it6bq_dTICsnzV6XiFOIKLrXL4rfqWM9cl4TsQNmyKb6Q'
-    'https://i.ytimg.com/an_webp/2YJgQOqjOh4/mqdefault_6s.webp?du=3000&sqp=CML01ogG&rs=AOn4CLBpd7bZr79fAT6QudEeoMJdF8ztvA'
-])
+
+# b = BoardBot()
+# # b.post_comment(b.get_topic_id(), ')))))', img_urls=[
+# #     # 'https://images.ru.prom.st/816121682_w640_h640_yakortsy-stelyuschiesya-tribulus-trava.jpg',
+# #     # 'https://lh3.googleusercontent.com/proxy/FaN_imi61_6uGs5GaMPLqKaw-ikTX1SCAQdhaV5tEnSUK0-21eRs07lLXyQiw4L0IDsbGplstzjC64it6bq_dTICsnzV6XiFOIKLrXL4rfqWM9cl4TsQNmyKb6Q'
+# #     'https://i.ytimg.com/an_webp/2YJgQOqjOh4/mqdefault_6s.webp?du=3000&sqp=CML01ogG&rs=AOn4CLBpd7bZr79fAT6QudEeoMJdF8ztvA'
+# # ])
+# # b.get_topic_by_name('')
+# b.post_comment('test', 'suck', 
+# img_urls=['https://images.ru.prom.st/816121682_w640_h640_yakortsy-stelyuschiesya-tribulus-trava.jpg'])

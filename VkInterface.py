@@ -13,8 +13,6 @@ class BoardBot:
         tmp_dict = json.load(open('./privates.json', 'r'))
         self.__group_id = tmp_dict['group_id']
         self.__user_token = tmp_dict['access_token']
-        self.__topic_id = tmp_dict['topic_id']
-
         self.__vk_session = vk_api.VkApi(
             token=self.__user_token
         )
@@ -125,6 +123,38 @@ class BoardBot:
                     return topic['id']
         except:
             return -1
+        
+    def _get_previous_attachments(self, topic_id: int, comm_id: int) -> str:
+        """Получить старые вложения изменяемого комментария
+
+        Args:
+            topic_id (int): ID обсуждения
+            comm_id (int): ID комментария
+
+        Returns:
+            (str): Пустая строка или строка, содержащая вложения Вконтакте, разделённые запятыми
+        """
+        result = ''
+        try:
+            comment = self.vk.board.getComments(
+                group_id=self.__group_id,
+                topic_id=topic_id,
+                need_likes=0,
+                start_comment_id=comm_id,
+                count=1,
+                extended=1
+            )['items'][0]
+            comm_attachments = comment.get('attachments', [])
+            for attachment in comm_attachments:
+                att_photo = attachment.get('photo', {})
+                result += 'photo{}_{},'.format(att_photo.get('owner_id', ''), att_photo.get('id', ''))
+            if result != '':
+                if result[len(result) - 1] == ',':
+                    result[:len(result) - 1:]
+            return result
+        except:
+            print_exc()
+            return ''
     
     def post_comment(self, topic_name: str, message: str, comment_url='', from_group=1, img_urls=[]) -> str:
         """Позволяет создать или изменить комментарий в обсуждении. Для изменения нужно передать ссылку на комментарий
@@ -158,6 +188,10 @@ class BoardBot:
                 params.pop('guid')
                 params.pop('from_group')
                 comm_id = int(comment_url[comment_url.find('post=') + 5:])
+                if attachments == '':
+                    attachments = self._get_previous_attachments(topic_id, comm_id)
+                    if attachments != '':
+                        params.setdefault('attachments', attachments)
                 params.setdefault('comment_id', comm_id)
                 if not self.vk.board.editComment(**params):
                     return ''
@@ -212,15 +246,3 @@ class BoardBot:
         except:
             print_exc()
             return [], post_url
-
-
-# b = BoardBot()
-# pprint(b.get_active_comments_users_list('https://vk.com/public195146403?w=wall-195146403_9'))
-# # b.post_comment(b.get_topic_id(), ')))))', img_urls=[
-# #     # 'https://images.ru.prom.st/816121682_w640_h640_yakortsy-stelyuschiesya-tribulus-trava.jpg',
-# #     # 'https://lh3.googleusercontent.com/proxy/FaN_imi61_6uGs5GaMPLqKaw-ikTX1SCAQdhaV5tEnSUK0-21eRs07lLXyQiw4L0IDsbGplstzjC64it6bq_dTICsnzV6XiFOIKLrXL4rfqWM9cl4TsQNmyKb6Q'
-# #     'https://i.ytimg.com/an_webp/2YJgQOqjOh4/mqdefault_6s.webp?du=3000&sqp=CML01ogG&rs=AOn4CLBpd7bZr79fAT6QudEeoMJdF8ztvA'
-# # ])
-# # b.get_topic_by_name('')
-# b.post_comment('test', 'suck', 
-# img_urls=['https://images.ru.prom.st/816121682_w640_h640_yakortsy-stelyuschiesya-tribulus-trava.jpg'])

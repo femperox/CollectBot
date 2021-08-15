@@ -60,12 +60,26 @@ class GoogleTabs:
         '''
 
         imgUrl = self.getJsonNamedRange(namedRange, typeCalling = 1)
-        pprint(imgUrl)
         imgUrl = imgUrl['values'][1][0]
         imgUrl = re.findall(r'"(\S+)"', imgUrl)
         imgUrl = imgUrl[0]
 
         return imgUrl
+
+    def getParticipantsList(self, spId, namedRange):
+
+       info = self.getJsonNamedRange(namedRange, typeCalling = 1)
+
+       info = info['values'][14:]
+
+       i = 0
+       participantList = []
+       while info[i][0] != "СУММАРНО":
+           participantList.append((info[i][0], info[i][1]))
+           i += 1
+       pprint(len(participantList))
+
+
 
     def createTable(self, spId, namedRange, participants = 1, image = "https://i.pinimg.com/originals/50/d8/03/50d803bda6ba43aaa776d0e243f03e7b.png"):
         '''
@@ -117,25 +131,5 @@ class TestingGoogleTabs(GoogleTabs):
             self.createTable(spId, namedRange + str(i+1), i+1)
 
 
-if __name__ == '__main__':
 
-    gt = TestingGoogleTabs()
-    pprint(gt.sp.spreadsheetsIds)
-    #gt.testingCreation(158683993, "testing5")
-
-    # TESTING
-    pList = []
-    pList.append(([1, 2], "Name1"))
-    pList.append(([3], "Name2"))
-
-    request = \
-        { "participants" : len(pList),
-          "participantList": pList
-        }
-
-    vk_sample = vk.BoardBot()
-    g= vk_sample.get_active_comments_users_list("https://vk.com/wall-200887174_7861")
-    pprint(g)
-
-    g = vk_sample.post_comment("Лоты и индивидуалки", message= "testing", img_urls= [gt.getImageURLFromNamedRange("testing51")])
 

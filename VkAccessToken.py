@@ -13,10 +13,7 @@ def get_access_token(client_id: int, scope: int) -> None:
     display=page\
     """.replace(" ", "").format(client_id=client_id, scope=scope)
     # Работа для Chrome. Можно вызывать и просто браузер по умолчанию
-    webbrowser.register('google-chrome', webbrowser.Chrome)
-    google = webbrowser.get('C:/Program Files (x86)/Google/Chrome/Application/chrome.exe %s')
-    google.open_new_tab(url)
-
+    webbrowser.open_new_tab(url)
 
 tmp_dict = json.load(open('./privates.json', 'r'))
 get_access_token(tmp_dict['app_id'], tmp_dict['rights'])

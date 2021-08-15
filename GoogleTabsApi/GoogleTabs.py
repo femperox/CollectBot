@@ -7,6 +7,7 @@ import re
 
 import GoogleTabsApi.Cells_Editor as ce
 import GoogleTabsApi.Spreadsheets.LotSpreadsheet as ls
+import VkInterface as vk
 
 from GoogleTabsApi.Styles.Borders import Borders as b
 
@@ -126,3 +127,8 @@ if __name__ == '__main__':
           "participantList": pList
         }
 
+    vk_sample = vk.BoardBot()
+    g= vk_sample.get_active_comments_users_list("https://vk.com/wall-200887174_7861")
+    pprint(g)
+
+    g = vk_sample.post_comment("Лоты и индивидуалки","test", img_urls= ["http://daurzapoved.com/images/article_images/did_you_know/daurskaya.jpg", "https://sun9-39.userapi.com/impg/ajkj3u5Wd6oBZJqPSXAy7kPWeRECSx1FIOoIXg/33j-WkLDfNA.jpg?size=1200x900&quality=96&sign=fc892e13127630e5be40a677ee264ec9&type=album"])

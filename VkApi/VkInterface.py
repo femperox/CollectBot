@@ -10,7 +10,7 @@ import json
 class BoardBot:
 
     def __init__(self) -> None:
-        tmp_dict = json.load(open('./privates.json', 'r')) # с файолм
+        tmp_dict = json.load(open('VkApi/privates.json', 'r'))
         self.__group_id = tmp_dict['group_id']
         self.__user_token = tmp_dict['access_token']
         self.__vk_session = vk_api.VkApi(
@@ -20,8 +20,8 @@ class BoardBot:
         self._init_tmp_dir()
     
     def _init_tmp_dir(self) -> None:
-        if not os.path.isdir('./tmp'):
-            os.mkdir('./tmp')
+        if not os.path.isdir('tmp'):
+            os.mkdir('tmp')
 
     def _get_image_extension(self, url):
         extensions = ['.png', '.jpg', '.jpeg', '.gif']

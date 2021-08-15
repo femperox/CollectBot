@@ -4,12 +4,10 @@ from googleapiclient import discovery
 from oauth2client.service_account import ServiceAccountCredentials
 import re
 
-
-import GoogleTabsApi.Cells_Editor as ce
 import GoogleTabsApi.Spreadsheets.LotSpreadsheet as ls
-import VkInterface as vk
 
-from GoogleTabsApi.Styles.Borders import Borders as b
+import VkApi.VkInterface as vk
+
 
 class GoogleTabs:
 
@@ -62,6 +60,7 @@ class GoogleTabs:
         '''
 
         imgUrl = self.getJsonNamedRange(namedRange, typeCalling = 1)
+        pprint(imgUrl)
         imgUrl = imgUrl['values'][1][0]
         imgUrl = re.findall(r'"(\S+)"', imgUrl)
         imgUrl = imgUrl[0]
@@ -122,7 +121,7 @@ if __name__ == '__main__':
 
     gt = TestingGoogleTabs()
     pprint(gt.sp.spreadsheetsIds)
-    gt.testingCreation(158683993, "testing5")
+    #gt.testingCreation(158683993, "testing5")
 
     # TESTING
     pList = []
@@ -133,8 +132,10 @@ if __name__ == '__main__':
         { "participants" : len(pList),
           "participantList": pList
         }
-    '''
+
     vk_sample = vk.BoardBot()
     g= vk_sample.get_active_comments_users_list("https://vk.com/wall-200887174_7861")
     pprint(g)
-    '''
+
+    g = vk_sample.post_comment("Лоты и индивидуалки", message= "testing", img_urls= [gt.getImageURLFromNamedRange("testing51")])
+

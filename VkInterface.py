@@ -227,7 +227,7 @@ class BoardBot:
                     'post_id': post_id,
                     'count': 100,
                     'extended': 1,
-                    'fields': 'id'
+                    'fields': 'id,first_name,last_name'
                 }
                 if counter > 1:
                     params.setdefault('start_comment_id', last_comment_id)
@@ -236,12 +236,13 @@ class BoardBot:
                 counter += 1
                 for comm in commentators:
                     if comm['id'] > 0 and comm['id'] not in admin_ids:
-                        user_ids.add(comm['id'])
+                        new_tuple = (comm['id'], comm['first_name'] + ' ' + comm['last_name'])
+                        user_ids.add(new_tuple)
                 if commentators != []:
                     last_comment_id = commentators[len(commentators) - 1]['id']
             result = []
             for user_id in user_ids:
-                result.append('https://vk.com/id' + str(user_id))
+                result.append(('https://vk.com/id' + str(user_id[0]), user_id[1]))
             return result, post_url
         except:
             print_exc()

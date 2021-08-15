@@ -45,7 +45,7 @@ class BoardBot:
             if extention != '':
                 filename = 'new_image' + extention
                 response = requests.get(url)
-                image = open('./tmp/' + filename, 'wb')
+                image = open('./VkApi/tmp/' + filename, 'wb')
                 image.write(response.content)
                 image.close()
             return filename
@@ -69,9 +69,9 @@ class BoardBot:
             try:
                 vk_response = requests.post(
                     vk_url, 
-                    files={'photo': open('./tmp/{}'.format(image_name), 'rb')}
+                    files={'photo': open('./VkApi/tmp/{}'.format(image_name), 'rb')}
                 ).json()
-                os.remove('./tmp/' + image_name)
+                os.remove('./VkApi/tmp/' + image_name)
                 if vk_response['photo']:
                     vk_image = self.vk.photos.saveWallPhoto(
                         group_id=self.__group_id,

@@ -10,7 +10,7 @@ import json
 class BoardBot:
 
     def __init__(self) -> None:
-        tmp_dict = json.load(open('./privates.json', 'r'))
+        tmp_dict = json.load(open('./privates.json', 'r')) # с файолм
         self.__group_id = tmp_dict['group_id']
         self.__user_token = tmp_dict['access_token']
         self.__vk_session = vk_api.VkApi(

@@ -91,7 +91,7 @@ class GoogleTabs:
         :return:
         '''
         self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheet_id,
-                                           body={"requests": self.sp.prepareLot(self.getSheetListProperties, spId, participants=participants, rangeName=namedRange)}).execute()
+                                           body={"requests": self.sp.prepareLot(self.getSheetListProperties(), spId, participants=participants, rangeName=namedRange)}).execute()
 
         self.service.spreadsheets().values().batchUpdate(spreadsheetId=self.spreadsheet_id,
                                                     body=self.sp.prepareBody(spId, image, collect= namedRange)).execute()

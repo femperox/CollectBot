@@ -96,7 +96,7 @@ class GoogleTabs:
         self.service.spreadsheets().values().batchUpdate(spreadsheetId=self.spreadsheet_id,
                                                     body=self.sp.prepareBody(spId, image, collect= namedRange)).execute()
 
-    def updateTable(self, namedRange, request):
+    def updateTable(self, namedRange, request, topicUrl):
         '''
         Обновляет таблицу в соотвествии с информацией об участниках
 
@@ -109,7 +109,7 @@ class GoogleTabs:
                                            body={"requests": self.sp.updateBaseOfLot(self.getJsonNamedRange(namedRange), request["participants"])}).execute()
 
         self.service.spreadsheets().values().batchUpdate(spreadsheetId=self.spreadsheet_id,
-                                                    body=self.sp.updateBaseValues(self.getJsonNamedRange(namedRange),request["participantList"])).execute()
+                                                    body=self.sp.updateBaseValues(self.getJsonNamedRange(namedRange),request["participantList"], topicUrl)).execute()
 
     def moveTable(self, sheetTo, namedRange):
         '''

@@ -260,7 +260,7 @@ class Lots():
      request = []
 
      sheetTitle, range = collectNamedRange.split("!")
-     spId = self.spreadsheetsIds[sheetTitle][0]
+     spId = self.spreadsheetsIds[sheetTitle[1:len(sheetTitle)-1]][0]
 
      range = range.split(":")
 
@@ -269,7 +269,6 @@ class Lots():
 
      if participants < rowsAmount:
         rangeToDelete = "A{0}:I{1}".format( self.startParticipantRow + participants, int(range[1][1:])-1 )
-        print(rangeToDelete)
         request.append(ce.deleteRange(spId, rangeToDelete))
 
      return request
@@ -290,7 +289,7 @@ class Lots():
     return itemString[:-2]
 
 
- def updateBaseValues(self, collectNamedRange, participantsInfo):
+ def updateBaseValues(self, collectNamedRange, participantsInfo, topicUrl):
      '''
      Обновляет значения ячеек: позиции, участники
 
@@ -304,13 +303,19 @@ class Lots():
 
      data = []
      sheetTitle, rangeParticipants = collectNamedRange.split("!")
-     spId = self.spreadsheetsIds[sheetTitle][0]
+     spId = self.spreadsheetsIds[sheetTitle[1:len(sheetTitle)-1]][0]
+
 
      for i in range(len(participantsInfo)):
          ran = sheetTitle + "!A{0}".format(self.startParticipantRow+i)
          data.append(ce.insertValue(spId, ran, self.listToString(participantsInfo[i][0]) ) )
          ran = ran.replace('A', 'B', 1)
          data.append(ce.insertValue(spId, ran, participantsInfo[i][1] ) )
+
+     topicUrl = '=HYPERLINK("{0}"; "тык")'.format(topicUrl)
+     ran = sheetTitle + "!I{0}".format(self.startLotRow+2)
+     data.append(ce.insertValue(spId, ran, topicUrl))
+
 
      body["data"] = data
      return body

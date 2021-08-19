@@ -77,7 +77,8 @@ class GoogleTabs:
        while info[i][0] != "СУММАРНО":
            participantList.append((info[i][0], info[i][1]))
            i += 1
-       pprint(len(participantList))
+
+       return participantList
 
 
 

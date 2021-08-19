@@ -46,7 +46,6 @@ def createMessage(collect, participantList, lotWallUrl, where = "Краснод�
     :param collect:
     :param participantList:
     :param lotWallUrl:
-    :param dorazbivWallUrl:
     :param where:
     :return:
     '''
@@ -112,6 +111,7 @@ def tryMakeCorrectItemList(inp, items_num, participant, correctList):
         listInp = checkItems(strToList(inp), items_num)
         correctList.append((listInp, participant))
 
+
 def checkParticipants(participantsList, items_num):
     '''
     Проверка айтемов и участников
@@ -120,39 +120,51 @@ def checkParticipants(participantsList, items_num):
     :param items_num:
     :return:
     '''
-
-    items_num = [i+1 for i in range(items_num)]
+    items_num = [i + 1 for i in range(items_num)]
     print(items_num)
 
     print("let's check items and participants!")
     correctList = []
 
-    for i in range(len(participantsList)):
+    flag = 0
 
-        inp = input("{0} :".format(participantsList[i][1]))
+    while len(items_num)!=0:
 
-        tryMakeCorrectItemList(inp, items_num, participantsList[i], correctList)
+        if flag == 0:
+            for i in range(len(participantsList)):
+                inp = input("{0} :".format(participantsList[i][1]))
+                tryMakeCorrectItemList(inp, items_num, participantsList[i], correctList)
+                if len(items_num) == 0: break
+        elif flag == 1:
+            if len(items_num) != 0:
+                pprint(items_num)
+                inp = input("There are {} items, which were not used! Add participants? y/n".format(len(items_num)))
+                if inp == "y":
+                    inp = int(input("How many: "))
 
-    if len(items_num) != 0:
-        pprint(items_num)
-        inp = input("There are {} items, which were not used! Add participants? y/n".format(len(items_num)))
-        if inp == "y":
-            inp = int(input("How many: "))
+                    for i in range(inp):
+                        id = input("Enter name and vk id of participant. if it's you id = 0:' ")
+                        name = re.split(r'https://vk.com/id\d+', id)[0]
 
-            for i in range(inp):
-                name, id = input("Enter name and vk id of participant. if it's you id = 0:' ").split(" ")
-                items = input("Items: ")
-                if id == "0":
-                    tryMakeCorrectItemList(items, items_num, name, correctList)
-                else:
-                    tryMakeCorrectItemList(items, items_num, (id, name), correctList)
+                        if name!=id:
+                            id = id[len(name):]
+                        else:
+                            name, id = name.split(" ")
 
-    if len(items_num) != 0:
-        pprint(items_num)
-        for x in items_num:
-            correctList.append(([x], " "))
+                        items = input("Items: ")
+                        if id == "0":
+                            tryMakeCorrectItemList(items, items_num, name, correctList)
+                        else:
+                            tryMakeCorrectItemList(items, items_num, (id, name), correctList)
+        else:
+            pprint(items_num)
+            for x in items_num:
+                correctList.append(([x], " "))
+            items_num = []
+        flag += 1
 
     return correctList
+
 
 def transformToTableFormat(participantsList):
     '''
@@ -241,20 +253,22 @@ def createTableTopic(post_url, collectNum = 0, spId=0, topicName=0, items=0, img
     :return:
     '''
 
-    namedRange = createNamedRange("L", collectNum)
+    namedRange = createNamedRange("D", collectNum)
 
-    table.createTable(spId, namedRange, participants= items, image = img_url)
+    #table.createTable(spId, namedRange, participants= items, image = img_url)
 
     participantsList = makeDistinctList(post_url)
     participantsList = checkParticipants(participantsList, items)
     participantsList.sort()
 
-    mes = createMessage(namedRange, transformToTopicFormat(participantsList), post_url, where= "Железнодорожный")
+    pprint(participantsList)
+
+    mes = createMessage(namedRange, transformToTopicFormat(participantsList), post_url)
 
 
-    topicUrl = vk.post_comment(topicName, mes, img_urls=[img_url])
+    #topicUrl = vk.post_comment(topicName, mes, img_urls=[img_url])
 
-    table.updateTable(namedRange, transformToTableFormat(participantsList), topicUrl)
+    #table.updateTable(namedRange, transformToTableFormat(participantsList), topicUrl)
 
 
 
@@ -264,15 +278,11 @@ if __name__ == '__main__':
     vk = vki.BoardBot()
     table = gt.GoogleTabs()
 
-    pprint(table.sp.spreadsheetsIds)
+    #pprint(table.sp.spreadsheetsIds)
 
     topicName = "Лоты и индивидуалки"
 
-    wallPosts = ['https://vk.com/wall-200887174_8069', 'https://vk.com/wall-200887174_8098']
+    wallPosts = ['https://vk.com/wall-200887174_7941']
 
-    createTableTopic(wallPosts,collectNum=159, topicName= topicName, spId = 0, items= 19, img_url= 'https://sun9-41.userapi.com/impg/YndPJ7b_fS4ow_mH6hczCi1CDm0ThuQ5nPQR6w/_IqQa9M2eEE.jpg?size=1200x900&quality=96&sign=cba1d5a273b4af02298b107a36418406&type=album')
-
-
-
-
+    createTableTopic(wallPosts,collectNum=160, topicName= topicName, spId = 1401862322, items= 8, img_url= 'https://sun9-36.userapi.com/impg/ODmwrYdxRwAmanSRFrRRWwUJmDjBFcTfEHrvdg/kr_XxYvfc7s.jpg?size=1200x900&quality=96&sign=7fe5e09e8fe8c42351bde14e52b7b89b&type=album')
 

@@ -9,18 +9,106 @@ import json
 class BoardBot:
 
     def __init__(self) -> None:
-        tmp_dict = json.load(open('./privates.json', 'r'))
+        tmp_dict = json.load(open('./VkApi/privates.json', encoding='utf-8'))
         self.__group_id = tmp_dict['group_id']
-        self.__user_token = tmp_dict['access_token']
-        self.__vk_session = vk_api.VkApi(
-            token=self.__user_token
-        )
+        auth_data = self._login_pass_get(tmp_dict)
+        if auth_data[0] and auth_data[1]:
+            self.__vk_session = vk_api.VkApi(
+                auth_data[0],
+                auth_data[1]
+            )
+        self.__vk_session.auth(token_only=True)
         self.vk = self.__vk_session.get_api()
         self._init_tmp_dir()
     
     def _init_tmp_dir(self) -> None:
         if not os.path.isdir('tmp'):
             os.mkdir('tmp')
+
+    def _create_encrypt_key(self, privates: dict) -> str:
+        """Создаёт или получает ключ для шифрования / дешифрования
+
+        Args:
+            privates (dict): json-словарь из файла с настройками доступа
+
+        Returns:
+            str: Ключ или ''
+        """
+        try:
+            if privates.get('secret_key', '') == '':
+                size = random.randint(5, 10)
+                key = ''
+                for _ in range(size):
+                    key += chr(random.randint(0, 10000))
+                privates.setdefault('secret_key', key)
+                json.dump(privates, open('./VkApi/privates.json', 'w'))
+            return privates.get('secret_key', '')
+        except:
+            print_exc()
+            return ''
+    
+    def _encode_decode_str(self, key: str, string: str, encode=True) -> str:
+        """Кодирует или декодирует строку по ключу
+
+        Args:
+            key (str): Ключ
+            string (str): Строка для кодирования / декодирования
+            encode (bool, optional): При encode=True - кодирует, иначе декодирует string
+
+        Returns:
+            str: Кодированое или декодированное значение string 
+        """
+        try:
+            result = ''
+            sign = 1 if encode else -1
+            if key:
+                counter = 0
+                for char in string:
+                    if counter == len(key):
+                        counter = 0
+                    result += chr(ord(char) + ord(key[counter]) * sign)
+                    counter += 1
+            return result
+        except:
+            print_exc()
+            return ''
+    
+    def _login_pass_get(self, privates: dict) -> tuple:
+        """Получает пару логин и пароль Вконтакте из файла настроек доступа
+
+        Args:
+            privates (dict): Настройки доступа
+
+        Returns:
+            tuple: Пара - логин и пароль или (None, None)
+        """
+        try:
+            login = privates.get('login', '')
+            password = privates.get('password', '')
+            key = self._create_encrypt_key(privates)
+            privates.setdefault('secret_key', key)
+            if login == '' and password == '':
+                # Поменять по надобности
+                # ======================
+                print('login:')
+                new_login = input()
+                print('password:')
+                new_pass = input()
+                # ======================
+                login = self._encode_decode_str(key, new_login)
+                password = self._encode_decode_str(key, new_pass)
+                privates.setdefault('login', login)
+                privates.setdefault('password', password)
+
+                json.dump(privates, open('./VkApi/privates.json', 'w'))
+                return new_login, new_pass
+            new_login = self._encode_decode_str(key, login, encode=False)
+            new_pass = self._encode_decode_str(key, password, encode=False)
+            return new_login, new_pass
+        except:
+            print_exc()
+            return None, None
+
 
     def _get_image_extension(self, url):
         extensions = ['.png', '.jpg', '.jpeg', '.gif']
@@ -44,7 +132,7 @@ class BoardBot:
             if extention != '':
                 filename = 'new_image' + extention
                 response = requests.get(url)
-                image = open('./tmp/' + filename, 'wb')
+                image = open('./VkApi/tmp/' + filename, 'wb')
                 image.write(response.content)
                 image.close()
             return filename
@@ -68,9 +156,9 @@ class BoardBot:
             try:
                 vk_response = requests.post(
                     vk_url, 
-                    files={'photo': open('./tmp/{}'.format(image_name), 'rb')}
+                    files={'photo': open('./VkApi/tmp/{}'.format(image_name), 'rb')}
                 ).json()
-                os.remove('./tmp/' + image_name)
+                os.remove('./VkApi/tmp/' + image_name)
                 if vk_response['photo']:
                     vk_image = self.vk.photos.saveWallPhoto(
                         group_id=self.__group_id,

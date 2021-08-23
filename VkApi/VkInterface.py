@@ -1,4 +1,3 @@
-from requests.api import request
 import vk_api
 from pprint import pprint
 from traceback import print_exc
@@ -10,7 +9,7 @@ import json
 class BoardBot:
 
     def __init__(self) -> None:
-        tmp_dict = json.load(open('VkApi/privates.json', 'r'))
+        tmp_dict = json.load(open('./privates.json', 'r'))
         self.__group_id = tmp_dict['group_id']
         self.__user_token = tmp_dict['access_token']
         self.__vk_session = vk_api.VkApi(
@@ -45,7 +44,7 @@ class BoardBot:
             if extention != '':
                 filename = 'new_image' + extention
                 response = requests.get(url)
-                image = open('./VkApi/tmp/' + filename, 'wb')
+                image = open('./tmp/' + filename, 'wb')
                 image.write(response.content)
                 image.close()
             return filename
@@ -69,9 +68,9 @@ class BoardBot:
             try:
                 vk_response = requests.post(
                     vk_url, 
-                    files={'photo': open('./VkApi/tmp/{}'.format(image_name), 'rb')}
+                    files={'photo': open('./tmp/{}'.format(image_name), 'rb')}
                 ).json()
-                os.remove('./VkApi/tmp/' + image_name)
+                os.remove('./tmp/' + image_name)
                 if vk_response['photo']:
                     vk_image = self.vk.photos.saveWallPhoto(
                         group_id=self.__group_id,
@@ -95,17 +94,23 @@ class BoardBot:
             str:  Возвращает пустую строку или строку вида <type><owner_id>_<media_id>
         """
         result = ''
-        urls_count = len(image_urls)
-        for i in range(urls_count):
-            new_image = self._local_image_upload(image_urls[i])
-            if new_image != '':
-                vk_image = self._vk_image_upload(new_image)
-                if vk_image != {}:
-                    result += 'photo{}_{}'.format(vk_image['owner_id'], vk_image['id']) + ('' if i == urls_count - 1 else ',')
-        if result != '':
-            if result[len(result) - 1] == ',':
-                result[:len(result) - 1:]
-        return result
+        result_urls = []
+        try:
+            urls_count = len(image_urls)
+            for i in range(urls_count):
+                new_image = self._local_image_upload(image_urls[i])
+                if new_image != '':
+                    vk_image = self._vk_image_upload(new_image)
+                    if vk_image != {}:
+                        result += 'photo{}_{}'.format(vk_image['owner_id'], vk_image['id']) + ('' if i == urls_count - 1 else ',')
+                        result_urls.append(vk_image['sizes'][-1]['url'])
+            if result != '':
+                if result[len(result) - 1] == ',':
+                    result[:len(result) - 1:]
+            return result, result_urls
+        except:
+            print_exc()
+            return '', []
 
     def _get_topic_by_name(self, topic_name: str) -> int:
         """
@@ -135,6 +140,7 @@ class BoardBot:
             (str): Пустая строка или строка, содержащая вложения Вконтакте, разделённые запятыми
         """
         result = ''
+        result_urls = []
         try:
             comment = self.vk.board.getComments(
                 group_id=self.__group_id,
@@ -148,15 +154,16 @@ class BoardBot:
             for attachment in comm_attachments:
                 att_photo = attachment.get('photo', {})
                 result += 'photo{}_{},'.format(att_photo.get('owner_id', ''), att_photo.get('id', ''))
+                result_urls.append(att_photo['sizes'][-1])
             if result != '':
                 if result[len(result) - 1] == ',':
-                    result[:len(result) - 1:]
-            return result
+                    result = result[:len(result) - 1:]
+            return result, result_urls
         except:
             print_exc()
-            return ''
+            return '', []
     
-    def post_comment(self, topic_name: str, message: str, comment_url='', from_group=1, img_urls=[]) -> str:
+    def post_comment(self, topic_name: str, message: str, comment_url='', from_group=1, img_urls=[]) -> tuple:
         """Позволяет создать или изменить комментарий в обсуждении. Для изменения нужно передать ссылку на комментарий
 
         Args:
@@ -167,7 +174,7 @@ class BoardBot:
             img_urls (list, optional): Список url картинок, которые необходимо прикрепить. По умолчанию = [].
 
         Returns:
-            str: Возвращает url созданного / изменённого комментария
+            tuple: Возвращает url созданного / изменённого комментария + список url прикреплённых к нему изображений
         """
         try:
             topic_id = self._get_topic_by_name(topic_name)
@@ -179,29 +186,37 @@ class BoardBot:
                 'guid': random.randint(0, 1000000000),
             }
             attachments = self._form_images_request_signature(img_urls)
-            if attachments != '':
-                params.setdefault('attachments', attachments)
-            
+            if attachments != ('', []):
+                params.setdefault('attachments', attachments[0])
             if comment_url == '':
                 comm_id = self.vk.board.createComment(**params)
             else:
                 params.pop('guid')
                 params.pop('from_group')
                 comm_id = int(comment_url[comment_url.find('post=') + 5:])
-                if attachments == '':
+                if attachments == ('', []):
                     attachments = self._get_previous_attachments(topic_id, comm_id)
-                    if attachments != '':
-                        params.setdefault('attachments', attachments)
+                    print('previous_att', attachments)
+                    if attachments != ('', []):
+                        params.setdefault('attachments', attachments[0])
                 params.setdefault('comment_id', comm_id)
+                pprint(params)
                 if not self.vk.board.editComment(**params):
-                    return ''
+                    return '', []
         
             res_url = 'https://vk.com/topic-{}_{}?post={}'.format(self.__group_id, topic_id, comm_id)
-            return res_url
+            return res_url, attachments[1]
         except:
             print_exc()
-            return ''
+            return '', []
     
+    def _append_unique_user_id(self, comm: dict, admin_ids: set, user_ids) -> list:
+        if comm['from_id'] > 0 and comm['from_id'] not in admin_ids:
+            new_id = comm['from_id']
+            if new_id not in user_ids:
+                user_ids.append(new_id)
+        return user_ids
+
     def get_active_comments_users_list(self, post_url: str) -> tuple:
         """Получает список ссылок на страницы пользователей, прокомментировавших пост
 
@@ -218,31 +233,44 @@ class BoardBot:
                     group_ids=self.__group_id, 
                     fields='contacts'
             )[0]['contacts']])
-            user_ids = set()
+            user_ids = []
             commentators = []
             last_comment_id = -1
+            unique_commentators = []
             while (counter == 1 or len(commentators)):
                 params = {
                     'owner_id': -int(self.__group_id),
                     'post_id': post_id,
                     'count': 100,
                     'extended': 1,
-                    'fields': 'id,first_name,last_name'
+                    'sort': 'asc',
+                    'fields': 'id,first_name,last_name',
+                    'thread_items_count': 10
                 }
                 if counter > 1:
                     params.setdefault('start_comment_id', last_comment_id)
                     params.setdefault('offset', 1)
-                commentators = self.vk.wall.getComments(**params).get('profiles', [])
+                vk_response = self.vk.wall.getComments(**params)
+                for profile in vk_response.get('profiles', []):
+                    if profile not in unique_commentators:
+                        unique_commentators.append(profile)
+                comments = vk_response.get('items', [])
                 counter += 1
-                for comm in commentators:
-                    if comm['id'] > 0 and comm['id'] not in admin_ids:
-                        new_tuple = (comm['id'], comm['first_name'] + ' ' + comm['last_name'])
-                        user_ids.add(new_tuple)
-                if commentators != []:
-                    last_comment_id = commentators[len(commentators) - 1]['id']
+                for comm in comments:
+                    user_ids = self._append_unique_user_id(comm, admin_ids, user_ids)
+                    thread_comments = comm['thread'].get('items', [])
+                    if  thread_comments != []:
+                        for t_comm in thread_comments:
+                            user_ids = self._append_unique_user_id(t_comm, admin_ids, user_ids)
+                if comments != []:
+                    last_comment_id = comments[-1]['id']
             result = []
             for user_id in user_ids:
-                result.append(('https://vk.com/id' + str(user_id[0]), user_id[1]))
+                for profile in unique_commentators:
+                    if profile['id'] == user_id:
+                        new_tuple = 'https://vk.com/id{}'.format(user_id), str(profile['first_name'] + ' ' + profile['last_name'])
+                        result.append(new_tuple)
+                        unique_commentators.remove(profile)
             return result, post_url
         except:
             print_exc()

@@ -15,7 +15,8 @@ class BoardBot:
         if auth_data[0] and auth_data[1]:
             self.__vk_session = vk_api.VkApi(
                 auth_data[0],
-                auth_data[1]
+                auth_data[1],
+                auth_handler=self._two_factor_auth
             )
         self.__vk_session.auth(token_only=True)
         self.vk = self.__vk_session.get_api()
@@ -24,6 +25,11 @@ class BoardBot:
     def _init_tmp_dir(self) -> None:
         if not os.path.isdir('tmp'):
             os.mkdir('tmp')
+
+    def _two_factor_auth(self):
+        key = input("Enter authentication code: ")
+        remember_device = True
+        return key, remember_device
 
     def _create_encrypt_key(self, privates: dict) -> str:
         """Создаёт или получает ключ для шифрования / дешифрования

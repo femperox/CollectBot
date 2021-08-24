@@ -232,11 +232,9 @@ def makeDistinctList(post_url):
     for url in post_url:
         participantsList.append(vk.get_active_comments_users_list(url))
 
-    if len(participantsList)> 1:
-        for i in range(len(participantsList) - 1):
-            pl = list(set(participantsList[i][0] + participantsList[i + 1][0]))
-    else:
-        pl = participantsList[0][0]
+    pl = []
+    for i in range(len(participantsList)):
+            pl = list(set(pl + participantsList[i][0]))
 
     return pl
 

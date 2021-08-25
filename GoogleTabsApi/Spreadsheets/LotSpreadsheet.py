@@ -267,7 +267,7 @@ class Lots():
      self.startParticipantRow = int(range[0][1:]) + 14
      rowsAmount = int(range[1][1:]) - self.startParticipantRow
 
-     if participants < rowsAmount:
+     if participants <= rowsAmount:
         rangeToDelete = "A{0}:I{1}".format( self.startParticipantRow + participants, int(range[1][1:])-1 )
         request.append(ce.deleteRange(spId, rangeToDelete))
 

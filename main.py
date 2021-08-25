@@ -253,8 +253,6 @@ def createTableTopic(post_url, collectNum = 0, spId=0, topicName=0, items=0, img
 
     namedRange = createNamedRange("D", collectNum)
 
-    #table.createTable(spId, namedRange, participants= items, image = img_url)
-
     participantsList = makeDistinctList(post_url)
     participantsList = checkParticipants(participantsList, items)
     participantsList.sort()
@@ -263,12 +261,10 @@ def createTableTopic(post_url, collectNum = 0, spId=0, topicName=0, items=0, img
 
     mes = createMessage(namedRange, transformToTopicFormat(participantsList), post_url)
 
+    topicInfo = vk.post_comment(topicName, mes, img_urls=[img_url])
 
-    #topicUrl = vk.post_comment(topicName, mes, img_urls=[img_url])
-
-    #table.updateTable(namedRange, transformToTableFormat(participantsList), topicUrl)
-
-
+    table.createTable(spId, namedRange, participants= items, image = topicInfo[1][0])
+    table.updateTable(namedRange, transformToTableFormat(participantsList), topicInfo[0])
 
 
 if __name__ == '__main__':
@@ -276,11 +272,17 @@ if __name__ == '__main__':
     vk = vki.BoardBot()
     table = gt.GoogleTabs()
 
-    #pprint(table.sp.spreadsheetsIds)
+    pprint(table.sp.spreadsheetsIds)
 
     topicName = "Лоты и индивидуалки"
 
-    wallPosts = ['https://vk.com/wall-200887174_7941']
+    wallPosts = ['https://vk.com/wall-200887174_8281']
 
-    createTableTopic(wallPosts,collectNum=160, topicName= topicName, spId = 1401862322, items= 8, img_url= 'https://sun9-36.userapi.com/impg/ODmwrYdxRwAmanSRFrRRWwUJmDjBFcTfEHrvdg/kr_XxYvfc7s.jpg?size=1200x900&quality=96&sign=7fe5e09e8fe8c42351bde14e52b7b89b&type=album')
+    dashaLot = 1401862322
+    dashaInd = 2011848664
+    leraLot = 0
+    test = 158683993
+
+    img = 'https://sun9-58.userapi.com/impg/mHL_QmBKcd6k6JIu3enZB_L9XNXqcx0hczV9OQ/FJ_92A__M6M.jpg?size=1000x749&quality=96&sign=f5b120864d6130f190d4f6174ec507e5&type=album'
+    createTableTopic(wallPosts,collectNum=1, topicName= topicName, spId = dashaLot, items= 1, img_url= img)
 

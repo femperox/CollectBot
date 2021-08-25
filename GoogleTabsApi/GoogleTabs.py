@@ -6,9 +6,6 @@ import re
 
 import GoogleTabsApi.Spreadsheets.LotSpreadsheet as ls
 
-import VkApi.VkInterface as vk
-
-
 class GoogleTabs:
 
     def __init__(self):
@@ -18,10 +15,10 @@ class GoogleTabs:
                                                                        ['https://www.googleapis.com/auth/spreadsheets',
                                                                         'https://www.googleapis.com/auth/drive'])
         httpAuth = credentials.authorize(httplib2.Http())
-        self.service = discovery.build('sheets', 'v4', http=httpAuth)
+        self.__service = discovery.build('sheets', 'v4', http=httpAuth)
 
         # id гугл таблицы
-        self.spreadsheet_id = '1A9cULhz1UAE0OWpIZ7q056NvCJj8d3Ju6C1nq2hElKc'
+        self.__spreadsheet_id = '1A9cULhz1UAE0OWpIZ7q056NvCJj8d3Ju6C1nq2hElKc'
 
         self.sp = ls.Lots(self.getSheetListProperties())
 
@@ -34,7 +31,7 @@ class GoogleTabs:
         :return: возвращает часть реквеста, а именно диапозон
         '''
         try:
-           result = self.service.spreadsheets().values().get(spreadsheetId= self.spreadsheet_id, range=namedRange, valueRenderOption = "FORMULA").execute()
+           result = self.__service.spreadsheets().values().get(spreadsheetId= self.__spreadsheet_id, range=namedRange, valueRenderOption ="FORMULA").execute()
         except :
            result = {"range": -1}
 
@@ -48,7 +45,7 @@ class GoogleTabs:
         :return: Возвращает информацию о листах
         '''
 
-        spreadsheet = self.service.spreadsheets().get(spreadsheetId = self.spreadsheet_id).execute()
+        spreadsheet = self.__service.spreadsheets().get(spreadsheetId = self.__spreadsheet_id).execute()
         return spreadsheet.get('sheets')
 
     def getImageURLFromNamedRange(self, namedRange):
@@ -81,7 +78,6 @@ class GoogleTabs:
        return participantList
 
 
-
     def createTable(self, spId, namedRange, participants = 1, image = "https://i.pinimg.com/originals/50/d8/03/50d803bda6ba43aaa776d0e243f03e7b.png"):
         '''
         Создаёт и заполняет базовую таблицу по заданным параметрам
@@ -91,11 +87,11 @@ class GoogleTabs:
         :param participants:
         :return:
         '''
-        self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheet_id,
-                                           body={"requests": self.sp.prepareLot(self.getSheetListProperties(), spId, participants=participants, rangeName=namedRange)}).execute()
+        self.__service.spreadsheets().batchUpdate(spreadsheetId=self.__spreadsheet_id,
+                                                  body={"requests": self.sp.prepareLot(self.getSheetListProperties(), spId, participants=participants, rangeName=namedRange)}).execute()
 
-        self.service.spreadsheets().values().batchUpdate(spreadsheetId=self.spreadsheet_id,
-                                                    body=self.sp.prepareBody(spId, image, collect= namedRange)).execute()
+        self.__service.spreadsheets().values().batchUpdate(spreadsheetId=self.__spreadsheet_id,
+                                                           body=self.sp.prepareBody(spId, image, collect= namedRange)).execute()
 
     def updateTable(self, namedRange, request, topicUrl):
         '''
@@ -106,11 +102,11 @@ class GoogleTabs:
         :return:
         '''
 
-        self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheet_id,
-                                           body={"requests": self.sp.updateBaseOfLot(self.getJsonNamedRange(namedRange), request["participants"])}).execute()
+        self.__service.spreadsheets().batchUpdate(spreadsheetId=self.__spreadsheet_id,
+                                                  body={"requests": self.sp.updateBaseOfLot(self.getJsonNamedRange(namedRange), request["participants"])}).execute()
 
-        self.service.spreadsheets().values().batchUpdate(spreadsheetId=self.spreadsheet_id,
-                                                    body=self.sp.updateBaseValues(self.getJsonNamedRange(namedRange),request["participantList"], topicUrl)).execute()
+        self.__service.spreadsheets().values().batchUpdate(spreadsheetId=self.__spreadsheet_id,
+                                                           body=self.sp.updateBaseValues(self.getJsonNamedRange(namedRange),request["participantList"], topicUrl)).execute()
 
     def moveTable(self, sheetTo, namedRange):
         '''
@@ -121,8 +117,8 @@ class GoogleTabs:
         :return:
         '''
 
-        self.service.spreadsheets().batchUpdate(spreadsheetId=self.spreadsheet_id,
-                                           body={ "requests": self.sp.changeList(self.getSheetListProperties(), sheetTo, namedRange, self.getJsonNamedRange(namedRange))}).execute()
+        self.__service.spreadsheets().batchUpdate(spreadsheetId=self.__spreadsheet_id,
+                                                  body={ "requests": self.sp.changeList(self.getSheetListProperties(), sheetTo, namedRange, self.getJsonNamedRange(namedRange))}).execute()
 
 class TestingGoogleTabs(GoogleTabs):
 

@@ -192,6 +192,30 @@ class Lots():
      image = '=IMAGE("{0}")'.format(image)
      data.append(ce.insertValue(spId, ran, image))
 
+     # Для расчётов
+     form = "!I{0}"
+     ran = sheetTitle + form.format(self.startLotRow+3)
+     data.append(ce.insertValue(spId, ran, 227))
+
+     ran = sheetTitle + form.format(self.startLotRow+4)
+     formula = "=I{0}/300".format(self.startLotRow+3)
+     data.append(ce.insertValue(spId, ran, formula))
+
+     for i in range(2):
+         row = self.startLotRow+6+i
+         ran = sheetTitle + form.format(row)
+         formula = "=CEILING(H{0}*I{1})".format(row, self.startLotRow+4)
+         data.append(ce.insertValue(spId, ran, formula))
+
+         ran = sheetTitle + "!H{0}".format(row)
+         data.append(ce.insertValue(spId, ran, 0))
+
+     for i in range(ord('H'), ord('I')+1):
+         row = self.startLotRow + 8
+         ran = sheetTitle + "!{0}{1}".format(chr(i), row)
+         formula = "= {0}{1} + {0}{2}".format(chr(i), row - 2, row -1)
+         data.append(ce.insertValue(spId,ran,formula))
+
      return data
 
 

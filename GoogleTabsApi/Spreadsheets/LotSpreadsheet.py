@@ -251,7 +251,8 @@ class Lots():
 
      oldSheetTitle, oldRange = collectNamedRange.split("!")
 
-     oldSpId = self.spreadsheetsIds[oldSheetTitle][0]
+     oldSpId = self.spreadsheetsIds[oldSheetTitle[1:len(oldSheetTitle)-1]][0]
+                #self.spreadsheetsIds[oldSheetTitle][0]
 
      request = []
 

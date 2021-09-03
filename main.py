@@ -251,20 +251,25 @@ def createTableTopic(post_url, collectNum = 0, spId=0, topicName=0, items=0, img
     :return:
     '''
 
-    namedRange = createNamedRange("D", collectNum)
+    namedRange = createNamedRange("L", collectNum)
 
     participantsList = makeDistinctList(post_url)
     participantsList = checkParticipants(participantsList, items)
     participantsList.sort()
 
-    pprint(participantsList)
-
-    mes = createMessage(namedRange, transformToTopicFormat(participantsList), post_url)
+    mes = createMessage(namedRange, transformToTopicFormat(participantsList), post_url, where = 'Железнодорожный')
 
     topicInfo = vk.post_comment(topicName, mes, img_urls=[img_url])
 
     table.createTable(spId, namedRange, participants= items, image = topicInfo[1][0])
     table.updateTable(namedRange, transformToTableFormat(participantsList), topicInfo[0])
+
+# Доработать!!!!
+def ShipmentToRussiaEvent(toSpId, lotList):
+
+    for i in range(len(lotList)):
+        lotList[i] = 'DCollect'+str(lotList[i])
+        table.moveTable(toSpId, lotList[i])
 
 
 if __name__ == '__main__':
@@ -276,13 +281,17 @@ if __name__ == '__main__':
 
     topicName = "Лоты и индивидуалки"
 
-    wallPosts = ['https://vk.com/wall-200887174_8281']
+    wallPosts = ['https://vk.com/wall-200887174_8566']
 
     dashaLot = 1401862322
+    dashaLotRF = 333654542
     dashaInd = 2011848664
     leraLot = 0
     test = 158683993
 
-    img = 'https://sun9-58.userapi.com/impg/mHL_QmBKcd6k6JIu3enZB_L9XNXqcx0hczV9OQ/FJ_92A__M6M.jpg?size=1000x749&quality=96&sign=f5b120864d6130f190d4f6174ec507e5&type=album'
-    createTableTopic(wallPosts,collectNum=1, topicName= topicName, spId = dashaLot, items= 1, img_url= img)
+    img = 'https://sun9-13.userapi.com/impg/VTqcSvn-e3uvPXAP0a8PfuZ0i4MlnkW-Z4ojlQ/wxRXF6X_nCg.jpg?size=1247x1009&quality=96&sign=5f673f37b4f33ce0f664523fedb81820&type=album'
+    #createTableTopic(wallPosts,collectNum=173, topicName= topicName, spId = leraLot,  items= 15, img_url= img)
 
+
+    lotList = [130, 135, 136, 137, 138, 142, 143]
+    ShipmentToRussiaEvent(dashaLotRF, lotList)

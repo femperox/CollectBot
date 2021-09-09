@@ -1,10 +1,9 @@
 from pprint import pprint
 import GoogleTabsApi.GoogleTabs as gt
 import VkApi.VkInterface as vki
-#import VkApi.VkAccessToken as vkt
 import re
 
-def createNamedRange(who, num:int, what = "Collect"):
+def createNamedRange(spId, who, num:int):
     '''
     Генерирует именованный диапозон. Нужно доработать
 
@@ -17,8 +16,10 @@ def createNamedRange(who, num:int, what = "Collect"):
     # тут сделать проверку по айди
     result = who
 
+    if spId == table.sp.spreadsheetsIds['Дашины лоты'][0] or spId == table.sp.spreadsheetsIds['Лерины лоты'][0]:
     # пока хз чё
-    result += what
+        result += "Collect"
+    else: result += 'Ind'
 
     result += str(num)
 
@@ -251,13 +252,13 @@ def createTableTopic(post_url, collectNum = 0, spId=0, topicName=0, items=0, img
     :return:
     '''
 
-    namedRange = createNamedRange("L", collectNum)
+    namedRange = createNamedRange(spId, "D", collectNum)
 
     participantsList = makeDistinctList(post_url)
     participantsList = checkParticipants(participantsList, items)
     participantsList.sort()
 
-    mes = createMessage(namedRange, transformToTopicFormat(participantsList), post_url, where = 'Железнодорожный')
+    mes = createMessage(namedRange, transformToTopicFormat(participantsList), post_url)
 
     topicInfo = vk.post_comment(topicName, mes, img_urls=[img_url])
 
@@ -281,7 +282,7 @@ if __name__ == '__main__':
 
     topicName = "Лоты и индивидуалки"
 
-    wallPosts = ['https://vk.com/wall-200887174_8566']
+    wallPosts = ['https://vk.com/wall-200887174_8729', 'https://vk.com/wall-200887174_8791']
 
     dashaLot = 1401862322
     dashaLotRF = 333654542
@@ -289,9 +290,9 @@ if __name__ == '__main__':
     leraLot = 0
     test = 158683993
 
-    img = 'https://sun9-13.userapi.com/impg/VTqcSvn-e3uvPXAP0a8PfuZ0i4MlnkW-Z4ojlQ/wxRXF6X_nCg.jpg?size=1247x1009&quality=96&sign=5f673f37b4f33ce0f664523fedb81820&type=album'
-    #createTableTopic(wallPosts,collectNum=173, topicName= topicName, spId = leraLot,  items= 15, img_url= img)
+    img = 'https://sun9-31.userapi.com/impg/1cPIhwhYtstWnJF6ssg0cDckXkPluqEUSoSBBw/jj1u33aCafM.jpg?size=1200x1010&quality=96&sign=31d90b152f25ded44ab4728ed4b2ae1a&type=album'
+    createTableTopic(wallPosts, collectNum=178, topicName= topicName, spId = dashaLot,  items= 18, img_url= img)
 
 
-    lotList = [130, 135, 136, 137, 138, 142, 143]
-    ShipmentToRussiaEvent(dashaLotRF, lotList)
+
+    #ShipmentToRussiaEvent(dashaLotRF, lotList)

@@ -31,7 +31,7 @@ class PicButton(QAbstractButton):
         self.update()
 
     def sizeHint(self):
-        return QSize(217, 212)
+        return QSize(150, 150)
 
     def changePicPressed(self, pic):
         self.pixmap_pressed = pic

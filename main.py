@@ -11,6 +11,10 @@ class mainWindow(QtWidgets.QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
+        self.ui.addButton.clicked.connect(self.addBtn)
+
+    def addBtn(self):
+        self.ui.gridLayoutWidgetAdd.setVisible(True)
 
 
 def main():

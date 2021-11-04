@@ -139,6 +139,7 @@ def checkParticipants(participantsList, items_num):
         elif flag == 1:
             if len(items_num) != 0:
                 pprint(items_num)
+                print("Amount of items: ", len(items_num) )
                 inp = input("There are {} items, which were not used! Add participants? y/n".format(len(items_num)))
                 if inp == "y":
                     inp = int(input("How many: "))
@@ -282,7 +283,8 @@ if __name__ == '__main__':
 
     topicName = "Лоты и индивидуалки"
 
-    wallPosts = ['https://vk.com/wall-200887174_8729', 'https://vk.com/wall-200887174_8791']
+
+    wallPosts = ['https://vk.com/wall-200887174_10112']
 
     dashaLot = 1401862322
     dashaLotRF = 333654542
@@ -290,9 +292,9 @@ if __name__ == '__main__':
     leraLot = 0
     test = 158683993
 
-    img = 'https://sun9-31.userapi.com/impg/1cPIhwhYtstWnJF6ssg0cDckXkPluqEUSoSBBw/jj1u33aCafM.jpg?size=1200x1010&quality=96&sign=31d90b152f25ded44ab4728ed4b2ae1a&type=album'
-    createTableTopic(wallPosts, collectNum=178, topicName= topicName, spId = dashaLot,  items= 18, img_url= img)
+    img = 'https://sun9-17.userapi.com/impg/2Glq2M4JptuR_kjc9utYKtgUlJeqwM3CE3MlgA/DT0_RzD83W4.jpg?size=1200x900&quality=96&sign=069f6911556f2fffb8ae894d3d3837e6&type=album'
+    createTableTopic(wallPosts, collectNum=203, topicName= topicName, spId = dashaLot,  items= 44, img_url= img)
 
-
+    lotList = [185, 186, 187, 188, 189, 192]
 
     #ShipmentToRussiaEvent(dashaLotRF, lotList)

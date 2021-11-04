@@ -44,7 +44,7 @@ def toUserEnteredFormat(color, hali = 'CENTER', vali = 'MIDDLE', textFormat = 'T
     userEnteredFormat['verticalAlignment'] = vali
     userEnteredFormat['textFormat'] = {'bold': textFormat}
     userEnteredFormat["backgroundColor"] = color
-    userEnteredFormat["wrapStrategy"] = "LEGACY_WRAP"
+    userEnteredFormat["wrapStrategy"] = "WRAP"
 
     return userEnteredFormat
 

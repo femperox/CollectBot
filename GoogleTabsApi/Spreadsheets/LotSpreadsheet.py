@@ -131,7 +131,7 @@ class Lots():
      return collectType, collectNum
 
 
- def prepareValues(self, spId, image, collect = ""):
+ def prepareValues(self, spId, image, collect = "", item = []):
      '''
      подготовка блока data в json-запросе для заполнения таблицы значениями
 
@@ -216,11 +216,18 @@ class Lots():
          formula = "= {0}{1} + {0}{2}".format(chr(i), row - 2, row -1)
          data.append(ce.insertValue(spId,ran,formula))
 
+     if item:
+        ran = sheetTitle + "!H{0}".format(self.startLotRow+6)
+        print('======================')
+        print(ran)
+        formula = "={0} + {1} + 300".format(item['priceYen'], item['percentTax'])
+        data.append(ce.insertValue(spId, ran, formula))
+
      return data
 
 
 
- def prepareBody(self, spId, image, collect = ""):
+ def prepareBody(self, spId, image, collect = "", item = []):
      '''
      подготовка json запроса для заполнения таблицы лота информауией
 
@@ -231,7 +238,7 @@ class Lots():
 
      body = {}
      body["valueInputOption"] = "USER_ENTERED"
-     body["data"] = self.prepareValues(spId, image, collect)
+     body["data"] = self.prepareValues(spId, image, collect, item)
 
      return body
 

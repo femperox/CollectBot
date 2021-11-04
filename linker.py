@@ -1,6 +1,7 @@
 from pprint import pprint
 import GoogleTabsApi.GoogleTabs as gt
 import VkApi.VkInterface as vki
+import misc.ParseZen as zen
 import re
 
 def createNamedRange(spId, who, num:int):
@@ -241,7 +242,7 @@ def makeDistinctList(post_url):
     return pl
 
 
-def createTableTopic(post_url, collectNum = 0, spId=0, topicName=0, items=0, img_url="https://i.pinimg.com/originals/50/d8/03/50d803bda6ba43aaa776d0e243f03e7b.png"):
+def createTableTopic(post_url, zen_url = '', collectNum = 0, spId=0, topicName=0, items=0, img_url="https://i.pinimg.com/originals/50/d8/03/50d803bda6ba43aaa776d0e243f03e7b.png"):
     '''
     Создаёт таблицу и комент в обсуждении по заданным параметрам
 
@@ -263,7 +264,11 @@ def createTableTopic(post_url, collectNum = 0, spId=0, topicName=0, items=0, img
 
     topicInfo = vk.post_comment(topicName, mes, img_urls=[img_url])
 
-    table.createTable(spId, namedRange, participants= items, image = topicInfo[1][0])
+    item = {}
+    if zen_url != '':
+        item = zen.parcePage(zen_url)
+
+    table.createTable(spId, namedRange, participants= items, image = topicInfo[1][0], item = item)
     table.updateTable(namedRange, transformToTableFormat(participantsList), topicInfo[0])
 
 # Доработать!!!!
@@ -292,8 +297,11 @@ if __name__ == '__main__':
     leraLot = 0
     test = 158683993
 
+    zen_url = ''
+
     img = 'https://sun9-17.userapi.com/impg/2Glq2M4JptuR_kjc9utYKtgUlJeqwM3CE3MlgA/DT0_RzD83W4.jpg?size=1200x900&quality=96&sign=069f6911556f2fffb8ae894d3d3837e6&type=album'
-    createTableTopic(wallPosts, collectNum=203, topicName= topicName, spId = dashaLot,  items= 44, img_url= img)
+    createTableTopic(wallPosts, zen_url= zen_url , collectNum=204, topicName= topicName,
+                     spId = dashaLot,  items= 1, img_url= img)
 
     lotList = [185, 186, 187, 188, 189, 192]
 

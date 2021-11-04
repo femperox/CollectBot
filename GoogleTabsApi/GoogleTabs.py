@@ -78,7 +78,7 @@ class GoogleTabs:
        return participantList
 
 
-    def createTable(self, spId, namedRange, participants = 1, image = "https://i.pinimg.com/originals/50/d8/03/50d803bda6ba43aaa776d0e243f03e7b.png"):
+    def createTable(self, spId, namedRange, participants = 1, item = [], image = "https://i.pinimg.com/originals/50/d8/03/50d803bda6ba43aaa776d0e243f03e7b.png"):
         '''
         Создаёт и заполняет базовую таблицу по заданным параметрам
 
@@ -91,7 +91,7 @@ class GoogleTabs:
                                                   body={"requests": self.sp.prepareLot(self.getSheetListProperties(), spId, participants=participants, rangeName=namedRange)}).execute()
 
         self.__service.spreadsheets().values().batchUpdate(spreadsheetId=self.__spreadsheet_id,
-                                                           body=self.sp.prepareBody(spId, image, collect= namedRange)).execute()
+                                                           body=self.sp.prepareBody(spId, image, collect= namedRange, item = item)).execute()
 
     def updateTable(self, namedRange, request, topicUrl):
         '''

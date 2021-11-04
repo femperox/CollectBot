@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import requests
 from pprint import pprint
+import re
 
 def makeSoup(url):
     headers = {
@@ -23,13 +24,15 @@ def parcePage(url):
 
 
     item = {}
-    item['priceYen'] = soup.find('span', id = 'lblPriceY').text[1:]
-    item['percentTax'] = soup.find('span', id = 'lblTax').text
+    item['priceYen'] = soup.find('span', id = 'lblPriceY').text[1:].replace(',','')
+    item['percentTax'] = soup.find('span', id = 'lblTax').text.replace(',','')
     item['priceShipmt'] = soup.find('span', id = 'lblChargeForShipping').text
     item['yahooPage'] = soup.find('a', id = 'productPage').get('href')
 
-    if item['priceShipmt'] == 'Платно':
-        item['priceShipmt'] = findShipmentPrice(item['yahooPage'])
+    try:
+        item['percentTax'] = re.findall('¥(\d+)', item['percentTax'])[0]
+    except:
+        item['percentTax'] = 0
 
     return item
 
@@ -39,9 +42,5 @@ def findShipmentPrice(url):
     soup = makeSoup(url)
 
     price = soup.find_all('ul', class_ = 'BidModal__postageArea js-postexpand-modalBody')
-    pprint(price)
 
     return price
-
-url = 'https://zenmarket.jp/ru/auction.aspx?itemCode=u1008817071'
-parcePage(url)

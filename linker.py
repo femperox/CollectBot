@@ -123,8 +123,8 @@ def checkParticipants(participantsList, items_num):
     :return:
     '''
     items_num = [i + 1 for i in range(items_num)]
-    print(items_num)
 
+    print('\n====================================\n')
     print("let's check items and participants!")
     correctList = []
 
@@ -134,19 +134,21 @@ def checkParticipants(participantsList, items_num):
 
         if flag == 0:
             for i in range(len(participantsList)):
-                inp = input("{0} :".format(participantsList[i][1]))
+                inp = input("{0} : ".format(participantsList[i][1]))
                 tryMakeCorrectItemList(inp, items_num, participantsList[i], correctList)
                 if len(items_num) == 0: break
         elif flag == 1:
             if len(items_num) != 0:
+
+                print('\n===== Remains')
                 pprint(items_num)
                 print("Amount of items: ", len(items_num) )
-                inp = input("There are {} items, which were not used! Add participants? y/n".format(len(items_num)))
+                inp = input("There are {} items, which were not used! Add participants? y/n: ".format(len(items_num)))
                 if inp == "y":
                     inp = int(input("How many: "))
 
                     for i in range(inp):
-                        id = input("Enter name and vk id of participant. if it's you id = 0:' ")
+                        id = input("Enter name and vk id of participant. if it's you id = 0: ' ")
                         name = re.split(r'https://vk.com/id\d+', id)[0]
 
                         if name!=id:
@@ -160,7 +162,9 @@ def checkParticipants(participantsList, items_num):
                         else:
                             tryMakeCorrectItemList(items, items_num, (id, name), correctList)
         else:
+            print('\n===== Free')
             pprint(items_num)
+            print("Amount of items: ", len(items_num))
             for x in items_num:
                 correctList.append(([x], " "))
             items_num = []
@@ -278,31 +282,52 @@ def ShipmentToRussiaEvent(toSpId, lotList):
         lotList[i] = 'DCollect'+str(lotList[i])
         table.moveTable(toSpId, lotList[i])
 
+def console():
+
+    choise = int(input('Enter the number:\n1. Make Lot\n2. Shipment to Russia(BETA)\nChoise: '))
+
+    if choise == 1:
+
+        topicName = "Лоты и индивидуалки"
+
+        lists = [ table.sp.spreadsheetsIds['Лерины лоты'][0],
+                  table.sp.spreadsheetsIds['Дашины лоты'][0],
+                  table.sp.spreadsheetsIds['Дашины индивидуалки '][0],
+                  table.sp.spreadsheetsIds['ТестЛист'][0]
+                ]
+
+        print('\nChoose the tab list:\n'
+              '1. Лерины лоты\t2. Дашины лоты\n'
+              '3. Дашины индивидуалки\t4. Тестовый лист'
+              )
+        choise = int(input('Choise: '))
+
+        spId = lists[choise-1]
+
+        zen_url = input('\nEnter the Zen url (might be empty): ')
+
+        wallPosts = input('\nEnter the vk posts. If more than 1 - use space: ')
+        wallPosts = wallPosts.split(' ')
+
+        img = input('\nEnter the image url: ')
+
+        collectNum = int(input("\nEnter the collect/ind number: "))
+
+        items = int(input('\nHow many items are there? '))
+
+        createTableTopic(wallPosts, zen_url, collectNum = collectNum, spId = spId,
+                         topicName = topicName, items = items, img_url = img)
+    elif choise == 2:
+
+        pass
+
 
 if __name__ == '__main__':
-
-    vk = vki.BoardBot()
     table = gt.GoogleTabs()
+    vk = vki.BoardBot()
 
-    pprint(table.sp.spreadsheetsIds)
+    lotList = [190, 191, 194, 195, 196]
 
-    topicName = "Лоты и индивидуалки"
-
-
-    wallPosts = ['https://vk.com/wall-200887174_10112']
-
-    dashaLot = 1401862322
-    dashaLotRF = 333654542
-    dashaInd = 2011848664
-    leraLot = 0
-    test = 158683993
-
-    zen_url = ''
-
-    img = 'https://sun9-17.userapi.com/impg/2Glq2M4JptuR_kjc9utYKtgUlJeqwM3CE3MlgA/DT0_RzD83W4.jpg?size=1200x900&quality=96&sign=069f6911556f2fffb8ae894d3d3837e6&type=album'
-    createTableTopic(wallPosts, zen_url= zen_url , collectNum=204, topicName= topicName,
-                     spId = dashaLot,  items= 1, img_url= img)
-
-    lotList = [185, 186, 187, 188, 189, 192]
+    console()
 
     #ShipmentToRussiaEvent(dashaLotRF, lotList)

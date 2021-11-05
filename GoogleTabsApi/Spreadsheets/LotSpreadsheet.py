@@ -218,8 +218,6 @@ class Lots():
 
      if item:
         ran = sheetTitle + "!H{0}".format(self.startLotRow+6)
-        print('======================')
-        print(ran)
         formula = "={0} + {1} + 300".format(item['priceYen'], item['percentTax'])
         data.append(ce.insertValue(spId, ran, formula))
 

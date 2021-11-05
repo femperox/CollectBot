@@ -283,10 +283,13 @@ def ShipmentToRussiaEvent(toSpId, lotList):
         table.moveTable(toSpId, lotList[i])
 
 def console():
+    choise = 0
 
-    choise = int(input('Enter the number:\n1. Make Lot\n2. Shipment to Russia(BETA)\nChoise: '))
+    while choise != 3:
 
-    if choise == 1:
+      choise = int(input('Enter the number:\n1. Make Lot\t2. Shipment to Russia(BETA)\n3.Exit\nChoise: '))
+
+      if choise == 1:
 
         topicName = "Лоты и индивидуалки"
 
@@ -317,17 +320,28 @@ def console():
 
         createTableTopic(wallPosts, zen_url, collectNum = collectNum, spId = spId,
                          topicName = topicName, items = items, img_url = img)
-    elif choise == 2:
+      elif choise == 2:
 
-        pass
+        lists = [table.sp.spreadsheetsIds['Дашины лоты (Едет в РФ)'][0],
+                 table.sp.spreadsheetsIds['Дашины лоты (Архив)'][0],
+                 table.sp.spreadsheetsIds['ТестЛист'][0]
+                ]
 
+        print('\nChoose the tab list:\n'
+              '1. Дашины лоты РФ\t2. Дашины лоты Архив\n'
+              '3. Тестовый лист'
+              )
+        choise = int(input('Choise: '))
+
+        spId = lists[choise - 1]
+
+        lotList = input("Enter lot's num using comma(, ): ")
+        lotList = lotList.split(', ')
+
+        ShipmentToRussiaEvent(spId, lotList)
 
 if __name__ == '__main__':
     table = gt.GoogleTabs()
     vk = vki.BoardBot()
 
-    lotList = [190, 191, 194, 195, 196]
-
     console()
-
-    #ShipmentToRussiaEvent(dashaLotRF, lotList)

@@ -221,6 +221,14 @@ class Lots():
         formula = "={0} + {1} + 300".format(item['priceYen'], item['percentTax'])
         data.append(ce.insertValue(spId, ran, formula))
 
+     if participants == 1:
+        ran = sheetTitle + "!D{0}".format(self.startParticipantRow)
+        formula = "=I{0}".format(self.startLotRow+6)
+        data.append(ce.insertValue(spId, ran, formula))
+        ran = sheetTitle + "!E{0}".format(self.startParticipantRow)
+        formula = "=I{0}".format(self.startLotRow + 7)
+        data.append(ce.insertValue(spId, ran, formula))
+
      return data
 
 

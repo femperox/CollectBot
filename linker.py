@@ -54,12 +54,13 @@ def createMessage(collect, participantList, lotWallUrl, where = "Краснод�
 
     collectType, collectNum = table.sp.defineCollectType(collect)
 
-    mes = collectType +" "+str(collectNum) +"\n"\
-          "Лот: {0}\n".format(lotWallUrl[0]) +\
-          createDorazbivStrings(lotWallUrl) +\
-          "\nСостояние: Выкупается \n\n" +\
-          participantList +\
-          "\nПоедет в {0}".format(where) # сделать определение куда
+    mes = collectType +" "+str(collectNum) +"\n"
+    if lotWallUrl[0] != '':
+        mes += "Лот: {0}\n".format(lotWallUrl[0]) +\
+                createDorazbivStrings(lotWallUrl)
+    mes += "\nСостояние: Выкупается \n\n" +\
+            participantList +\
+            "\nПоедет в {0}".format(where) # сделать определение куда
 
     return mes
 
@@ -258,13 +259,21 @@ def createTableTopic(post_url, zen_url = '', collectNum = 0, spId=0, topicName=0
     :return:
     '''
 
-    namedRange = createNamedRange(spId, "D", collectNum)
+    if spId == table.sp.spreadsheetsIds['Лерины лоты'][0]:
+        letter = 'L'
+        where = 'Железнодорожный'
+    else:
+        letter = 'D'
+        where = 'Краснодар'
+
+
+    namedRange = createNamedRange(spId, letter, collectNum)
 
     participantsList = makeDistinctList(post_url)
     participantsList = checkParticipants(participantsList, items)
     participantsList.sort()
 
-    mes = createMessage(namedRange, transformToTopicFormat(participantsList), post_url)
+    mes = createMessage(namedRange, transformToTopicFormat(participantsList), post_url, where = where)
 
     topicInfo = vk.post_comment(topicName, mes, img_urls=[img_url])
 
@@ -303,14 +312,16 @@ def console():
               '1. Лерины лоты\t2. Дашины лоты\n'
               '3. Дашины индивидуалки\t4. Тестовый лист'
               )
-        choise = int(input('Choise: '))
+        choise1 = int(input('Choise: '))
 
-        spId = lists[choise-1]
+        spId = lists[choise1-1]
 
         zen_url = input('\nEnter the Zen url (might be empty): ')
 
         wallPosts = input('\nEnter the vk posts. If more than 1 - use space: ')
         wallPosts = wallPosts.split(' ')
+
+        print(wallPosts)
 
         img = input('\nEnter the image url: ')
 
@@ -331,9 +342,9 @@ def console():
               '1. Дашины лоты РФ\t2. Дашины лоты Архив\n'
               '3. Тестовый лист'
               )
-        choise = int(input('Choise: '))
+        choise1 = int(input('Choise: '))
 
-        spId = lists[choise - 1]
+        spId = lists[choise1 - 1]
 
         lotList = input("Enter lot's num using comma(, ): ")
         lotList = lotList.split(', ')

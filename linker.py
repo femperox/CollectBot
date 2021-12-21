@@ -149,13 +149,13 @@ def checkParticipants(participantsList, items_num):
                     inp = int(input("How many: "))
 
                     for i in range(inp):
-                        id = input("Enter name and vk id of participant. if it's you id = 0: ' ")
-                        name = re.split(r'https://vk.com/id\d+', id)[0]
+                        id = input("Enter vk url. if it's you url = 0: ' ")
 
-                        if name!=id:
-                            id = id[len(name):]
-                        else:
-                            name, id = name.split(" ")
+                        try:
+                            name, id = vk.get_num_id(id)
+                        except:
+                            name = id
+                            id = '0'
 
                         items = input("Items: ")
                         if id == "0":
@@ -219,11 +219,13 @@ def transformToTopicFormat(participantsList):
     pList = ""
 
     for p in participantsList:
+        print(p)
         items = table.sp.listToString(p[0])
-        if isinstance(p[1], str):
-            participant = p[1]
-        else:
+
+        try:
             participant = "@{0}({1})".format(getIdFromUrl(p[1][0]), p[1][1])
+        except:
+            participant = p[1]
         pList += "{0} - {1}\n".format(items, participant)
 
     return pList
@@ -281,8 +283,8 @@ def createTableTopic(post_url, zen_url = '', collectNum = 0, spId=0, topicName=0
     if zen_url != '':
         item = zen.parcePage(zen_url)
 
-    table.createTable(spId, namedRange, participants= items, image = topicInfo[1][0], item = item)
-    table.updateTable(namedRange, transformToTableFormat(participantsList), topicInfo[0])
+    #table.createTable(spId, namedRange, participants= items, image = topicInfo[1][0], item = item)
+    #table.updateTable(namedRange, transformToTableFormat(participantsList), topicInfo[0])
 
 # Доработать!!!!
 def ShipmentToRussiaEvent(toSpId, lotList):
@@ -356,3 +358,5 @@ if __name__ == '__main__':
     vk = vki.BoardBot()
 
     console()
+
+

@@ -21,6 +21,8 @@ class BoardBot:
         self.__vk_session.auth(token_only=True)
         self.vk = self.__vk_session.get_api()
         self._init_tmp_dir()
+
+        self.lang = 100
     
     def _init_tmp_dir(self) -> None:
         if not os.path.isdir('tmp'):
@@ -369,3 +371,10 @@ class BoardBot:
         except:
             print_exc()
             return [], post_url
+
+
+    def get_num_id(self, id):
+
+        id = id.split('/')[-1]
+        user = self.vk.users.get(user_ids = id, lang = self.lang)
+        return ( "{0} {1}".format(user[0]['first_name'], user[0]['last_name']), 'https://vk.com/id{}'.format(user[0]['id']))

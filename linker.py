@@ -4,7 +4,7 @@ import VkApi.VkInterface as vki
 import misc.ParseZen as zen
 import re
 
-def createNamedRange(spId, who, num:int):
+def createNamedRange(spId, who, find):
     '''
     Генерирует именованный диапозон. Нужно доработать
 
@@ -17,11 +17,16 @@ def createNamedRange(spId, who, num:int):
     # тут сделать проверку по айди
     result = who
 
+
     if spId == table.sp.spreadsheetsIds['Дашины лоты'][0] or spId == table.sp.spreadsheetsIds['Лерины лоты'][0]:
     # пока хз чё
         result += "Collect"
-    else: result += 'Ind'
+        find['key_word'] = 'Коллективка'
+    else:
+        result += 'Ind'
+        find['key_word'] = 'Индивидуалка'
 
+    num = int(vk.get_last_lot(find)) + 1
     result += str(num)
 
     return result
@@ -149,7 +154,7 @@ def checkParticipants(participantsList, items_num):
                     inp = int(input("How many: "))
 
                     for i in range(inp):
-                        id = input("Enter vk url. if it's you url = 0: ' ")
+                        id = input("Enter vk url. if it's you, enter 'Мне': ' ")
 
                         try:
                             name, id = vk.get_num_id(id)
@@ -249,7 +254,7 @@ def makeDistinctList(post_url):
     return pl
 
 
-def createTableTopic(post_url, zen_url = '', collectNum = 0, spId=0, topicName=0, items=0, img_url="https://i.pinimg.com/originals/50/d8/03/50d803bda6ba43aaa776d0e243f03e7b.png"):
+def createTableTopic(post_url, zen_url = '', spId=0, topicName=0, items=0, img_url="https://i.pinimg.com/originals/50/d8/03/50d803bda6ba43aaa776d0e243f03e7b.png"):
     '''
     Создаёт таблицу и комент в обсуждении по заданным параметрам
 
@@ -268,8 +273,9 @@ def createTableTopic(post_url, zen_url = '', collectNum = 0, spId=0, topicName=0
         letter = 'D'
         where = 'Краснодар'
 
+    find = {'topic_name': topicName, 'collect_type': 'Индивидуалка'}
 
-    namedRange = createNamedRange(spId, letter, collectNum)
+    namedRange = createNamedRange(spId, letter, find)
 
     participantsList = makeDistinctList(post_url)
     participantsList = checkParticipants(participantsList, items)
@@ -320,19 +326,19 @@ def console():
 
         zen_url = input('\nEnter the Zen url (might be empty): ')
 
-        wallPosts = input('\nEnter the vk posts. If more than 1 - use space: ')
+        wallPosts = input('\nEnter the vk posts. If more than 1 - use space. (might be empty): ')
         wallPosts = wallPosts.split(' ')
 
-        print(wallPosts)
-
-        img = input('\nEnter the image url: ')
-
-        collectNum = int(input("\nEnter the collect/ind number: "))
+        img = input('\nEnter the image url (might be empty): ')
 
         items = int(input('\nHow many items are there? '))
 
-        createTableTopic(wallPosts, zen_url, collectNum = collectNum, spId = spId,
-                         topicName = topicName, items = items, img_url = img)
+        if len(img) == 0:
+            createTableTopic(wallPosts, zen_url, spId = spId,
+                         topicName = topicName, items = items)
+        else:
+            createTableTopic(wallPosts, zen_url, spId=spId,
+                             topicName=topicName, items=items, img_url=img)
       elif choise == 2:
 
         lists = [table.sp.spreadsheetsIds['Дашины лоты (Едет в РФ)'][0],
@@ -358,5 +364,7 @@ if __name__ == '__main__':
     vk = vki.BoardBot()
 
     console()
+
+
 
 

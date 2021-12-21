@@ -374,7 +374,39 @@ class BoardBot:
 
 
     def get_num_id(self, id):
+        '''
+        Получить имя, фамилию и числовой айди пользователя
+
+        :param id: ссылка на пользователя в произвольном формате
+        :return:
+        '''
 
         id = id.split('/')[-1]
         user = self.vk.users.get(user_ids = id, lang = self.lang)
         return ( "{0} {1}".format(user[0]['first_name'], user[0]['last_name']), 'https://vk.com/id{}'.format(user[0]['id']))
+
+    def get_last_lot(self, what_to_find):
+        '''
+        Возвращает номер последнего лота (коллекта/индивидуалки)
+        :param what_to_find: словарь, содержащий имя обсуждения и ключевое слово
+        :return:
+        '''
+
+        topic_id = self._get_topic_by_name(what_to_find['topic_name'])
+
+        params = {
+            'group_id': self.__group_id,
+            'topic_id': topic_id,
+            'sort': 'desc',
+            'count': 100
+        }
+
+        comments = self.vk.board.getComments(**params)
+
+        number = 0
+        for comment in comments['items']:
+            if comment['text'].find(what_to_find['key_word']) == 0:
+                number = comment['text'].split('\n')[0].split(' ')[1]
+                return number
+
+        return number

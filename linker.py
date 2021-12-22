@@ -65,7 +65,7 @@ def createMessage(collect, participantList, lotWallUrl, where = "Краснод�
                 createDorazbivStrings(lotWallUrl)
     mes += "\nСостояние: Выкупается \n\n" +\
             participantList +\
-            "\nПоедет в {0}".format(where) # сделать определение куда
+            "\nПоедет в {0}".format(where)
 
     return mes
 
@@ -293,11 +293,15 @@ def createTableTopic(post_url, zen_url = '', spId=0, topicName=0, items=0, img_u
     #table.updateTable(namedRange, transformToTableFormat(participantsList), topicInfo[0])
 
 # Доработать!!!!
-def ShipmentToRussiaEvent(toSpId, lotList):
+def ShipmentToRussiaEvent(toSpId, collectList, indList):
 
-    for i in range(len(lotList)):
-        lotList[i] = 'DCollect'+str(lotList[i])
-        table.moveTable(toSpId, lotList[i])
+    lotList = {'DCollect': [x for x in collectList], 'DInd': [x for x in indList]}
+
+    for key in lotList.keys():
+        for i in range(len(lotList[key])):
+            if lotList[key][i] != '':
+                table.moveTable(toSpId, key + lotList[key][i])
+
 
 def console():
     choise = 0
@@ -354,16 +358,22 @@ def console():
 
         spId = lists[choise1 - 1]
 
-        lotList = input("Enter lot's num using comma(, ): ")
-        lotList = lotList.split(', ')
+        collectList = input("Enter collect's num using comma(, ) (might be empty): ")
+        collectList = collectList.split(', ')
 
-        ShipmentToRussiaEvent(spId, lotList)
+        indList = input("Enter ind's num using comma(, ) (might be empty): ")
+        indList = indList.split(', ')
+
+        ShipmentToRussiaEvent(spId, collectList, indList)
 
 if __name__ == '__main__':
+
     table = gt.GoogleTabs()
     vk = vki.BoardBot()
 
     console()
+
+
 
 
 

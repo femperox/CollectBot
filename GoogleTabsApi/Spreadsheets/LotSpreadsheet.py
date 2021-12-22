@@ -2,6 +2,7 @@ import GoogleTabsApi.Cells_Editor as ce
 from GoogleTabsApi.Styles.Borders import Borders as b
 from GoogleTabsApi.Styles.Colors import Colors as c
 import re
+from pprint import pprint
 
 class Lots():
 
@@ -23,8 +24,9 @@ class Lots():
    self.spreadsheetsIds[sheetList[6]['properties']['title']] = (sheetList[6]['properties']['sheetId'], sheetList[6]['properties']['index'])
    self.spreadsheetsIds[sheetList[8]['properties']['title']] = (sheetList[8]['properties']['sheetId'], sheetList[8]['properties']['index'])
    self.spreadsheetsIds[sheetList[9]['properties']['title']] = (sheetList[9]['properties']['sheetId'], sheetList[9]['properties']['index'])
+   #self.spreadsheetsIds[sheetList[10]['properties']['title']] = (sheetList[10]['properties']['sheetId'], sheetList[10]['properties']['index'])
 
- def findFreeRaw(self, sheetList, spId):
+ def findFreeRaw(self, sheetList, spId, namedRange):
      '''
      Поиск свободной ячейки в таблице
 
@@ -35,6 +37,11 @@ class Lots():
 
      spIds = list(self.spreadsheetsIds.items())
 
+     if namedRange.find("DCollect") == 0:
+         startColumnIndex = 1
+     else:
+         startColumnIndex = 11
+
      sheetId = 0
 
      for i in range(len(spIds)):
@@ -44,8 +51,11 @@ class Lots():
 
      # Поиск свободного места
      try:
-        freeRaw = sorted(sheetList[sheetId]['merges'], key=lambda x: x['endRowIndex'], reverse=True)[0]['endRowIndex']  # Узнаём последнюю заполненную строчку
-        return freeRaw+2
+        # Узнаём последнюю заполненную
+
+        neededMerges = [merge for merge in sheetList[sheetId]['merges'] if merge['startColumnIndex'] == startColumnIndex]
+        freeRaw = sorted(neededMerges, key=lambda x: x['endRowIndex'], reverse=True)[0]['endRowIndex']
+        return freeRaw+3
      except:
          return 1
 
@@ -260,12 +270,21 @@ class Lots():
      :return: возвращает json запрос
      '''
 
-     newRange = "A{0}".format(self.findFreeRaw(sheetList, newSpId))
+     if collectId.find("DCollect") == 0:
+         startLetter = 'A'
+         endLetter = 'I'
+     else:
+         startLetter = 'K'
+         endLetter = 'S'
+
+     newRange = "{0}{1}".format(startLetter, self.findFreeRaw(sheetList, newSpId, collectId))
 
      oldSheetTitle, oldRange = collectNamedRange.split("!")
 
-     oldSpId = self.spreadsheetsIds[oldSheetTitle[1:len(oldSheetTitle)-1]][0]
-                #self.spreadsheetsIds[oldSheetTitle][0]
+     try:
+        oldSpId = self.spreadsheetsIds[oldSheetTitle[1:len(oldSheetTitle)-1]][0]
+     except:
+        oldSpId = self.spreadsheetsIds[oldSheetTitle][0]
 
      request = []
 
@@ -278,11 +297,12 @@ class Lots():
      oldRangeWithBlankRow = convertedRange[0] +":" + convertedRange[1][0] + str( int(convertedRange[1][1:])+1)
      request.append(ce.deleteRange(oldSpId, oldRangeWithBlankRow))
 
+     '''
      # Сопостовление индексов для нового места
      convertedRange = int(convertedRange[1][1:]) - int(convertedRange[0][1:]) + int(newRange[1:])
-     newRange += ':I{0}'.format(convertedRange)
-
+     newRange += ':{0}{1}'.format(endLetter, convertedRange)
      request.append(ce.addNamedRange(newSpId, newRange, collectId))
+     '''
 
      return request
 

@@ -4,6 +4,7 @@ from googleapiclient import discovery
 from oauth2client.service_account import ServiceAccountCredentials
 import re
 
+import GoogleTabsApi.Cells_Editor as ce
 import GoogleTabsApi.Spreadsheets.LotSpreadsheet as ls
 
 class GoogleTabs:
@@ -119,6 +120,13 @@ class GoogleTabs:
 
         self.__service.spreadsheets().batchUpdate(spreadsheetId=self.__spreadsheet_id,
                                                   body={ "requests": self.sp.changeList(self.getSheetListProperties(), sheetTo, namedRange, self.getJsonNamedRange(namedRange))}).execute()
+
+
+    def addRows(self, spId):
+
+
+        self.__service.spreadsheets().batchUpdate(spreadsheetId=self.__spreadsheet_id,
+                                                  body={"requests": [ce.updateSheetProperties(spId, 650)]}).execute()
 
 class TestingGoogleTabs(GoogleTabs):
 

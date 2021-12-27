@@ -289,8 +289,8 @@ def createTableTopic(post_url, zen_url = '', spId=0, topicName=0, items=0, img_u
     if zen_url != '':
         item = zen.parcePage(zen_url)
 
-    #table.createTable(spId, namedRange, participants= items, image = topicInfo[1][0], item = item)
-    #table.updateTable(namedRange, transformToTableFormat(participantsList), topicInfo[0])
+    table.createTable(spId, namedRange, participants= items, image = topicInfo[1][0], item = item)
+    table.updateTable(namedRange, transformToTableFormat(participantsList), topicInfo[0])
 
 # Доработать!!!!
 def ShipmentToRussiaEvent(toSpId, collectList, indList):
@@ -371,8 +371,13 @@ if __name__ == '__main__':
     table = gt.GoogleTabs()
     vk = vki.BoardBot()
 
-    console()
+    #console()
+    namedRange = 'DCollect9001'
+    toSpId = 662031387
 
+    table.moveTable(toSpId, namedRange)
+
+    #table.addRows(158683993)
 
 
 

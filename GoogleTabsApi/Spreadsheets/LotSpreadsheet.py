@@ -17,6 +17,9 @@ class Lots():
    for i in range(len(sheetList)):
        self.spreadsheetsIds[sheetList[i]['properties']['title']] = (sheetList[i]['properties']['sheetId'], sheetList[i]['properties']['index'], sheetList[i]['properties']['title'])
    '''
+
+
+
    self.spreadsheetsIds[sheetList[0]['properties']['title']] = (sheetList[0]['properties']['sheetId'], sheetList[0]['properties']['index'])
    self.spreadsheetsIds[sheetList[3]['properties']['title']] = (sheetList[3]['properties']['sheetId'], sheetList[3]['properties']['index'])
    self.spreadsheetsIds[sheetList[4]['properties']['title']] = (sheetList[4]['properties']['sheetId'], sheetList[4]['properties']['index'])
@@ -25,6 +28,20 @@ class Lots():
    self.spreadsheetsIds[sheetList[8]['properties']['title']] = (sheetList[8]['properties']['sheetId'], sheetList[8]['properties']['index'])
    self.spreadsheetsIds[sheetList[9]['properties']['title']] = (sheetList[9]['properties']['sheetId'], sheetList[9]['properties']['index'])
    #self.spreadsheetsIds[sheetList[10]['properties']['title']] = (sheetList[10]['properties']['sheetId'], sheetList[10]['properties']['index'])
+
+
+ def findRowCount(self, sheetList, spId):
+     '''
+     Поиск суммарного количества строк на листе
+
+     :param sheetList: Список свойств листов таблицы
+     :param spId: айди листа в таблице
+     :return: возвращает индекс последней строки
+     '''
+
+     name = self.findName(spId)
+     properties = sheetList[self.spreadsheetsIds[name][1]]['properties']
+     return properties['gridProperties']['rowCount']
 
  def findFreeRaw(self, sheetList, spId, namedRange):
      '''
@@ -88,6 +105,9 @@ class Lots():
     self.startLotRow = self.findFreeRaw(sheetList, spId)
     self.startParticipantRow = self.startLotRow + 14
     self.summaryRow = self.startParticipantRow + participants
+
+    if self.summaryRow >= self.findRowCount(sheetList, spId):
+        request.append(ce.updateSheetProperties(spId, addingRows = 500))
 
     # стили ячеек
     request.append(ce.repeatCells(spId, "A{0}:G{1}".format(self.startLotRow, self.summaryRow), c.white))
@@ -277,9 +297,11 @@ class Lots():
          startLetter = 'K'
          endLetter = 'S'
 
-     newRange = "{0}{1}".format(startLetter, self.findFreeRaw(sheetList, newSpId, collectId))
+     freeRow = self.findFreeRaw(sheetList, newSpId, collectId)
+     newRange = "{0}{1}".format(startLetter, freeRow)
 
      oldSheetTitle, oldRange = collectNamedRange.split("!")
+     index = re.findall('(\d+)', oldRange)
 
      try:
         oldSpId = self.spreadsheetsIds[oldSheetTitle[1:len(oldSheetTitle)-1]][0]
@@ -287,6 +309,10 @@ class Lots():
         oldSpId = self.spreadsheetsIds[oldSheetTitle][0]
 
      request = []
+
+     # проверка на возможность вставки
+     if int(index[1]) - int(index[0]) + freeRow >= self.findRowCount(sheetList, newSpId):
+         request.append(ce.updateSheetProperties(newSpId, addingRows = 500))
 
      request.append(ce.CutPasteRange(oldSpId, oldRange, newRange, newSpId))
      request.append(ce.deleteNamedRange(collectId))
@@ -305,6 +331,7 @@ class Lots():
      '''
 
      return request
+
 
  def updateBaseOfLot(self, collectNamedRange, participants):
      '''

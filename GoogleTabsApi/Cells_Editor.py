@@ -231,3 +231,17 @@ def insertValue(spId, range, text ="", majorDime = "ROWS"):
     data["values"] = [[text]]
 
     return data
+
+def updateSheetProperties(spId, addingRows):
+
+    request = {  "updateSheetProperties": {"properties":
+                                                        { "sheetId": spId,
+                                                          "gridProperties": {"rowCount" : addingRows,
+                                                                             'columnCount': 24
+                                                                             }
+                                                        },
+                                                    "fields" : "gridProperties"
+                                                  }
+    }
+
+    return request

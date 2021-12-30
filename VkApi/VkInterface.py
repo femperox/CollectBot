@@ -5,6 +5,7 @@ import requests
 import os
 import random
 import json
+import re
 
 class BoardBot:
 
@@ -410,3 +411,25 @@ class BoardBot:
                 return number
 
         return number
+
+    def ban_users(self, user_list):
+        '''
+        Забанить список пользователей
+        :param user_list: список словарей с полями 'id' - Ссылка на пользователя; 'comment' - Текст комментария к бану.
+        :return:
+        '''
+
+        params = {
+            'group_id': self.__group_id,
+            'comment_visible': 1
+        }
+
+        for user in user_list:
+
+            params['owner_id'] = re.findall('id(\d+)',self.get_num_id(user['id'])[1])[0]
+            params['comment'] = user['comment']
+
+            self.vk.groups.ban(**params)
+
+
+

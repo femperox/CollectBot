@@ -121,6 +121,8 @@ class GoogleTabs:
         self.__service.spreadsheets().batchUpdate(spreadsheetId=self.__spreadsheet_id,
                                                   body={ "requests": self.sp.changeList(self.getSheetListProperties(), sheetTo, namedRange, self.getJsonNamedRange(namedRange))}).execute()
 
+        self.__service.spreadsheets().values().batchUpdate(spreadsheetId=self.__spreadsheet_id,
+                                                           body=self.sp.setDateOfShipment(sheetTo, self.getJsonNamedRange(namedRange))).execute()
 
     def addRows(self, spId):
 

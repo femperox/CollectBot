@@ -21,8 +21,6 @@ class Lots():
        self.spreadsheetsIds[sheetList[i]['properties']['title']] = (sheetList[i]['properties']['sheetId'], sheetList[i]['properties']['index'], sheetList[i]['properties']['title'])
    '''
 
-
-
    self.spreadsheetsIds[sheetList[0]['properties']['title']] = (sheetList[0]['properties']['sheetId'], sheetList[0]['properties']['index'])
    self.spreadsheetsIds[sheetList[3]['properties']['title']] = (sheetList[3]['properties']['sheetId'], sheetList[3]['properties']['index'])
    self.spreadsheetsIds[sheetList[4]['properties']['title']] = (sheetList[4]['properties']['sheetId'], sheetList[4]['properties']['index'])
@@ -31,7 +29,7 @@ class Lots():
    self.spreadsheetsIds[sheetList[8]['properties']['title']] = (sheetList[8]['properties']['sheetId'], sheetList[8]['properties']['index'])
    self.spreadsheetsIds[sheetList[9]['properties']['title']] = (sheetList[9]['properties']['sheetId'], sheetList[9]['properties']['index'])
    #self.spreadsheetsIds[sheetList[10]['properties']['title']] = (sheetList[10]['properties']['sheetId'], sheetList[10]['properties']['index'])
-
+   pprint(self.spreadsheetsIds)
 
  def findRowCount(self, sheetList, spId):
      '''
@@ -304,12 +302,15 @@ class Lots():
      newRange = "{0}{1}".format(startLetter, freeRow)
 
      oldSheetTitle, oldRange = collectNamedRange.split("!")
+
      index = re.findall('(\d+)', oldRange)
 
+
      try:
-        oldSpId = self.spreadsheetsIds[oldSheetTitle[1:len(oldSheetTitle)-1]][0]
+         oldSheetTitle = re.findall("'(.+)'", oldSheetTitle)[0]
      except:
-        oldSpId = self.spreadsheetsIds[oldSheetTitle][0]
+         pass
+     oldSpId = self.spreadsheetsIds[oldSheetTitle][0]
 
      request = []
 
@@ -344,21 +345,38 @@ class Lots():
  def setDateOfShipment(self, spId, namedRange):
 
      now = datetime.now()
-     gotDate = now.strftime("%d.%m.%Y")
-     takeDate = ( now+relativedelta(months=+1)).strftime("%d.%m.%Y")
 
      data = []
-     
+     gotDate = now.strftime("%d.%m.%Y")
 
-     index = re.findall('(\d+)', namedRange.split("!")[1])
+     if spId == self.spreadsheetsIds['Дашины лоты (Архив)'][0]:
+        takeDate = ( now+relativedelta(months=+1)).strftime("%d.%m.%Y")
+        info = '{0} - {1}'.format(gotDate, takeDate)
+        label = 'Получено - Забрать:'
+     else:
+         info = gotDate
+         label = 'Отправлено'
+
+     sheetTitle, index = namedRange.split("!")
+     lastLetter = index.split(':')[1]
+     lastLetter = re.findall('(\D+)', lastLetter)[0]
+
+     indexes = re.findall('(\d+)', index)
+     print(namedRange)
      print(index)
-     #sheetTitle = self.findName(spId)
-
-     #ran = sheetTitle + "!A{0}:B{0}".format(self.startLotRow)
-     #data.append(ce.insertValue(spId, ran, "{1} №{0}   Трек:".format(collectNum, collectType)))
 
 
-     pass
+     ran = sheetTitle + "!{0}{1}:{0}{1}".format(lastLetter, indexes[1])
+     data.append(ce.insertValue(spId, ran, info))
+     ran = sheetTitle + "!{0}{1}:{0}{1}".format(chr(ord(lastLetter)-1), indexes[1])
+     data.append(ce.insertValue(spId, ran, label))
+
+     body = {}
+     body["valueInputOption"] = "USER_ENTERED"
+     body["data"] = data
+
+
+     return body
 
 
  def updateBaseOfLot(self, collectNamedRange, participants):

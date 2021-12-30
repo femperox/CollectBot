@@ -3,6 +3,9 @@ from GoogleTabsApi.Styles.Borders import Borders as b
 from GoogleTabsApi.Styles.Colors import Colors as c
 import re
 from pprint import pprint
+from datetime import datetime
+from dateutil.relativedelta import *
+import time
 
 class Lots():
 
@@ -311,7 +314,8 @@ class Lots():
      request = []
 
      # проверка на возможность вставки
-     if int(index[1]) - int(index[0]) + freeRow >= self.findRowCount(sheetList, newSpId):
+     newEnd = int(index[1]) - int(index[0]) + freeRow
+     if newEnd >= self.findRowCount(sheetList, newSpId):
          request.append(ce.updateSheetProperties(newSpId, addingRows = 500))
 
      request.append(ce.CutPasteRange(oldSpId, oldRange, newRange, newSpId))
@@ -323,6 +327,11 @@ class Lots():
      oldRangeWithBlankRow = convertedRange[0] +":" + convertedRange[1][0] + str( int(convertedRange[1][1:])+1)
      request.append(ce.deleteRange(oldSpId, oldRangeWithBlankRow))
 
+     # оформелние ячеек с датами отправок
+     request.append(ce.repeatCells(newSpId, "{0}{1}:{0}{1}".format(endLetter, newEnd), c.white_blue, hali="LEFT"))
+     request.append(ce.repeatCells(newSpId, "{0}{1}:{0}{1}".format(chr(ord(endLetter)-1), newEnd), c.white_blue, hali="RIGHT"))
+     request.append(ce.setCellBorder(newSpId, "{0}{1}:{2}{1}".format(chr(ord(endLetter)-1), newEnd, endLetter), all_same= False, bstyleList=[b.no_border, b.plain_black, b.plain_black, b.plain_black]))
+
      '''
      # Сопостовление индексов для нового места
      convertedRange = int(convertedRange[1][1:]) - int(convertedRange[0][1:]) + int(newRange[1:])
@@ -331,6 +340,25 @@ class Lots():
      '''
 
      return request
+
+ def setDateOfShipment(self, spId, namedRange):
+
+     now = datetime.now()
+     gotDate = now.strftime("%d.%m.%Y")
+     takeDate = ( now+relativedelta(months=+1)).strftime("%d.%m.%Y")
+
+     data = []
+     
+
+     index = re.findall('(\d+)', namedRange.split("!")[1])
+     print(index)
+     #sheetTitle = self.findName(spId)
+
+     #ran = sheetTitle + "!A{0}:B{0}".format(self.startLotRow)
+     #data.append(ce.insertValue(spId, ran, "{1} №{0}   Трек:".format(collectNum, collectType)))
+
+
+     pass
 
 
  def updateBaseOfLot(self, collectNamedRange, participants):

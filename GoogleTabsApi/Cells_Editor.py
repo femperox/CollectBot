@@ -91,7 +91,7 @@ def setCellBorder(spId, range, all_same = True, only_outer = False, bstyleList =
     if not isinstance(bstyleList, list): bstyleList = [bstyleList]
 
     if len(bstyleList) < 6:
-        bstyleList = bstyleList + [b.no_border]*(4-len(bstyleList))
+        bstyleList = bstyleList + [b.no_border]*(6-len(bstyleList))
 
     if all_same:
         bstyleList = [bstyleList[0]]*6

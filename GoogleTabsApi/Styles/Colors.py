@@ -6,6 +6,8 @@ class Colors:
     light_yellow = {'blue': 0.6, 'green': 0.8980392, 'red': 1} #Отсрочка/Цвет окаймляющей рамки
     light_blue = {'blue': 0.9098039, 'green': 0.77254903, 'red': 0.62352943} #Результрующее число при расчётах
 
+    white_blue = {'blue': 0.8901960, 'green': 0.87843137, 'red': 0.81568627} # даты отправки/получения
+
     white = {'blue': 1, 'green': 1, 'red': 1}
     black = {'blue': 0, 'green': 0, 'red': 0}
     green = {'green': 1}

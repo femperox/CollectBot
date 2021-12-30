@@ -372,10 +372,14 @@ if __name__ == '__main__':
     vk = vki.BoardBot()
 
     #console()
-    namedRange = 'DCollect9001'
-    toSpId = 662031387
+    #namedRange = 'DCollect9001'
+    #toSpId = 662031387
+    #toSpId = 158683993
 
-    table.moveTable(toSpId, namedRange)
+    #table.moveTable(toSpId, namedRange)
+
+    #table.sp.setDateOfShipment(4,'gggg!A3:D31')
+
 
     #table.addRows(158683993)
 

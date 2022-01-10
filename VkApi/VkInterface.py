@@ -6,6 +6,7 @@ import os
 import random
 import json
 import re
+import time
 
 class BoardBot:
 
@@ -412,6 +413,63 @@ class BoardBot:
 
         return number
 
+
+    def replace_url(self, topic_name):
+        '''
+        Заменяет ссылки на пользователей на "тег"
+
+        :param topic_name: Название обсуждения
+        :return:
+        '''
+
+        topic_id = self._get_topic_by_name(topic_name)
+
+        start_comment_id = 1
+        while True:
+            params = {
+                'group_id': self.__group_id,
+                'topic_id': topic_id,
+                'sort': 'asc',
+                'count': 100,
+                'start_comment_id': start_comment_id + 1
+            }
+
+            comments = self.vk.board.getComments(**params)
+            id = list(comments['items'])[-1]['id']
+
+
+
+            if len(comments) <= 1 or id == start_comment_id: break
+            start_comment_id = id
+
+            for comment in comments['items']:
+
+                text = comment['text']
+
+                urls = re.findall('- https://(\S+)', text)
+
+                if len(urls) == 0: continue
+
+                print('\n'+text.split('\n')[0])
+
+                for url in urls:
+                    user = self.get_num_id(url)
+                    print(user)
+                    id = re.findall('vk.com/(\S+)', user[1])[0]
+                    text = text.replace('https://'+url, '[{0}|{1}]'.format(id, user[0]))
+
+                params_edit = {
+                    'group_id': self.__group_id,
+                    'topic_id': topic_id,
+                    'comment_id': comment['id'],
+                    'message': text
+                }
+
+                self.vk.board.editComment(**params_edit)
+                time.sleep(3)
+
+
+
     def ban_users(self, user_list):
         '''
         Забанить список пользователей
@@ -431,5 +489,14 @@ class BoardBot:
 
             self.vk.groups.ban(**params)
 
+    # ДОДЕЛАТЬ
+    def payment_messege(self, mes, user_list):
 
+        params = {
+            'message': mes
+        }
 
+        for user in user_list:
+
+            params['user_id'] = re.findall('id(\d+)',self.get_num_id(user)[1])[0]
+            self.vk.messages.send(**params)

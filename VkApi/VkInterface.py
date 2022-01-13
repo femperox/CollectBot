@@ -489,6 +489,28 @@ class BoardBot:
 
             self.vk.groups.ban(**params)
 
+    def find_comment(self, topic_name, parcel_num):
+
+        topic_id = self._get_topic_by_name(topic_name)
+
+        start_comment_id = 1
+        while True:
+            params = {
+                'group_id': self.__group_id,
+                'topic_id': topic_id,
+                'sort': 'asc',
+                'count': 100,
+                'start_comment_id': start_comment_id + 1
+            }
+
+            comments = self.vk.board.getComments(**params)
+            id = list(comments['items'])[-1]['id']
+
+            if len(comments) <= 1 or id == start_comment_id: break
+            start_comment_id = id
+
+
+
     # ДОДЕЛАТЬ
     def payment_messege(self, mes, user_list):
 

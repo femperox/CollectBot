@@ -70,10 +70,17 @@ class GoogleTabs:
 
        info = info['values'][14:]
 
+       pprint(info)
+
        i = 0
        participantList = []
        while info[i][0] != "СУММАРНО":
-           participantList.append((info[i][0], info[i][1]))
+
+           # Когда позицию никто не взял
+           try:
+               participantList.append([str(info[i][0]), info[i][1]])
+           except:
+               participantList.append([str(info[i][0]), ''])
            i += 1
 
        return participantList
@@ -125,10 +132,54 @@ class GoogleTabs:
                                                            body=self.sp.setDateOfShipment(sheetTo, self.getJsonNamedRange(namedRange))).execute()
 
     def addRows(self, spId):
-
+        '''
+        Добавление строчек на лист
+        :param spId:
+        :return:
+        '''
 
         self.__service.spreadsheets().batchUpdate(spreadsheetId=self.__spreadsheet_id,
                                                   body={"requests": [ce.updateSheetProperties(spId, 650)]}).execute()
+
+
+    def changePositions(self, spId, namedRange, newParticipants):
+
+
+        oldParticipants = self.getParticipantsList(spId, namedRange)
+
+        pprint(oldParticipants)
+        pprint(newParticipants)
+
+
+        for new in newParticipants:
+
+            for item in new[0].split(', '):
+
+             for i in range(len(oldParticipants)):
+
+                if oldParticipants[i][0].find(item) >= 0:
+
+                    # Если айтем один
+                    if oldParticipants[i][0].find(',') < 0:
+                        oldParticipants.pop(i)
+                    else:
+                        # Если айтем стоит не на первом месте
+                        if oldParticipants[i][0].find(item+',') == 0:
+
+                            oldParticipants[i][0] = oldParticipants[i][0].replace(item+', ', '')
+                        else:
+                            oldParticipants[i][0] = oldParticipants[i][0].replace(', ' + item, '')
+
+                    if [new[0], new[1]] not in oldParticipants:
+                        oldParticipants.append([new[0], new[1]])
+                    break
+
+        print('============')
+        pprint(oldParticipants)
+
+
+
+
 
 class TestingGoogleTabs(GoogleTabs):
 

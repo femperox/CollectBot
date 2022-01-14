@@ -70,8 +70,6 @@ class GoogleTabs:
 
        info = info['values'][14:]
 
-       pprint(info)
-
        i = 0
        participantList = []
        while info[i][0] != "СУММАРНО":
@@ -142,20 +140,11 @@ class GoogleTabs:
                                                   body={"requests": [ce.updateSheetProperties(spId, 650)]}).execute()
 
 
-    def changePositions(self, spId, namedRange, newParticipants):
+    def changingPositions(self, items, oldParticipants):
 
+        for item in items.split(', '):
 
-        oldParticipants = self.getParticipantsList(spId, namedRange)
-
-        pprint(oldParticipants)
-        pprint(newParticipants)
-
-
-        for new in newParticipants:
-
-            for item in new[0].split(', '):
-
-             for i in range(len(oldParticipants)):
+            for i in range(len(oldParticipants)):
 
                 if oldParticipants[i][0].find(item) >= 0:
 
@@ -164,18 +153,66 @@ class GoogleTabs:
                         oldParticipants.pop(i)
                     else:
                         # Если айтем стоит не на первом месте
-                        if oldParticipants[i][0].find(item+',') == 0:
+                        if oldParticipants[i][0].find(item + ',') == 0:
 
-                            oldParticipants[i][0] = oldParticipants[i][0].replace(item+', ', '')
+                            oldParticipants[i][0] = oldParticipants[i][0].replace(item + ', ', '')
                         else:
                             oldParticipants[i][0] = oldParticipants[i][0].replace(', ' + item, '')
 
-                    if [new[0], new[1]] not in oldParticipants:
-                        oldParticipants.append([new[0], new[1]])
-                    break
+        return oldParticipants
 
-        print('============')
-        pprint(oldParticipants)
+    def changePositions(self, spId, namedRange, newParticipants):
+
+
+        oldParticipants = self.getParticipantsList(spId, namedRange)
+
+        #pprint(oldParticipants)
+        #pprint(newParticipants)
+
+
+        oldParticipantsNoItems = { oldParticipants[i][1]:i for i in range(len(oldParticipants))}
+        pprint(oldParticipantsNoItems)
+
+        for new in newParticipants:
+            if new[1] not in oldParticipantsNoItems:
+
+                oldParticipants.append(['', new[1]])
+                oldParticipantsNoItems = {oldParticipants[i][1]: i for i in range(len(oldParticipants))}
+                sep = ''
+            else:
+                sep = ', '
+
+            #oldParticipants = self.changingPositions(new[0], oldParticipants)
+            index = oldParticipantsNoItems[new[1]]
+            for item in new[0].split(', '):
+
+                for i in range(len(oldParticipants)):
+
+                    if oldParticipants[i][0].find(item) >= 0:
+                        print(oldParticipants[i][0])
+                        # Если айтем один
+                        if oldParticipants[i][0].find(',') < 0:
+                            print('find ,')
+                            oldParticipants.pop(i)
+                            oldParticipantsNoItems = {oldParticipants[i][1]: i for i in range(len(oldParticipants))}
+                            index = oldParticipantsNoItems[new[1]]
+                        else:
+                            print('else')
+                            # Если айтем стоит не на первом месте
+                            if oldParticipants[i][0].find(item + ',') == 0:
+
+                                oldParticipants[i][0] = oldParticipants[i][0].replace(item + ', ', '')
+                            else:
+                                print('replace not 1')
+                                oldParticipants[i][0] = oldParticipants[i][0].replace(', ' + item, '')
+                    break
+                oldParticipants[index][0] += sep+item
+
+
+        #print('============')
+        #pprint(oldParticipants)
+        
+
 
 
 

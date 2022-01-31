@@ -3,6 +3,7 @@ import httplib2
 from googleapiclient import discovery
 from oauth2client.service_account import ServiceAccountCredentials
 import re
+from operator import itemgetter
 
 import GoogleTabsApi.Cells_Editor as ce
 import GoogleTabsApi.Spreadsheets.LotSpreadsheet as ls
@@ -88,9 +89,11 @@ class GoogleTabs:
         '''
         Создаёт и заполняет базовую таблицу по заданным параметрам
 
-        :param spId:
+        :param spId: айди листа в таблице
         :param namedRange: имя Именованного диапозона
-        :param participants:
+        :param participants: количество участников лота
+        :param item:
+        :param image: ссылка на изображение для оформления лота
         :return:
         '''
         self.__service.spreadsheets().batchUpdate(spreadsheetId=self.__spreadsheet_id,
@@ -104,7 +107,7 @@ class GoogleTabs:
         Обновляет таблицу в соотвествии с информацией об участниках
 
         :param namedRange: имя Именованного диапозона
-        :param request:
+        :param request: словарь участников лота вида: {"participants": количество, "participantList": [[ строка_позиций, участник], ...] }
         :return:
         '''
 
@@ -132,7 +135,7 @@ class GoogleTabs:
     def addRows(self, spId):
         '''
         Добавление строчек на лист
-        :param spId:
+        :param spId: айди листа в таблице
         :return:
         '''
 
@@ -140,79 +143,110 @@ class GoogleTabs:
                                                   body={"requests": [ce.updateSheetProperties(spId, 650)]}).execute()
 
 
-    def changingPositions(self, items, oldParticipants):
+    def makeItemString(self, items):
+        '''
+        Создаёт упорядоченную по номерам позций строку айтомов
+        :param items: массив айтемов
+        :return: возвращает строку
+        '''
 
-        for item in items.split(', '):
+
+        items = [int(item) for item in items]
+        items.sort()
+        itemString = (''.join([str(item)+', ' for item in items]))[0:-2]
+
+        return itemString
+
+
+    def getTopicUrl(self, spId, namedRange):
+        '''
+        Получение ссылки из обсуждения на конкретный лот
+        :param spId: айди листа в таблице
+        :param namedRange: имя Именованного диапозона
+        :return: строка со ссылкой
+        '''
+
+        topicUrl = self.getJsonNamedRange(namedRange, typeCalling=1)['values'][2][-1]
+        topicUrl = re.findall('"(\S+)"', topicUrl)[0]
+
+        return topicUrl
+
+    def changePositions(self, spId, namedRange, newParticipants):
+        '''
+        Производит автоматическую перепись позиций для участников лота (новые участники включаются)
+        :param spId: айди листа в таблице
+        :param namedRange: имя Именованного диапозона
+        :param newParticipants: список участников и их новых позиций в формате [[ строка_позиций, участник], ...]
+        :return:
+        '''
+
+        oldParticipants = self.getParticipantsList(spId, namedRange)
+        actualParticipants = []
+
+        activeIndexes = set()
+
+        for new in newParticipants:
+
+            # связка хохяин - индекс
+            oldParticipantsNoItems = {part[1]: oldParticipants.index(part) for part in oldParticipants}
+            actualParticipantsNoItems = {part[1] : actualParticipants.index(part) for part in actualParticipants}
+
+            newItems = new[0].split(', ')
 
             for i in range(len(oldParticipants)):
 
-                if oldParticipants[i][0].find(item) >= 0:
+               oldItems = oldParticipants[i][0].split(', ')
 
-                    # Если айтем один
-                    if oldParticipants[i][0].find(',') < 0:
-                        oldParticipants.pop(i)
-                    else:
-                        # Если айтем стоит не на первом месте
-                        if oldParticipants[i][0].find(item + ',') == 0:
+               for newItem in newItems:
+                  if newItem in oldItems:
 
-                            oldParticipants[i][0] = oldParticipants[i][0].replace(item + ', ', '')
-                        else:
-                            oldParticipants[i][0] = oldParticipants[i][0].replace(', ' + item, '')
+                       if len(oldParticipants[i][0]) > 1:
 
-        return oldParticipants
+                            oldItems.remove(newItem)
+                            oldParticipants[i][0] = self.makeItemString(oldItems)
 
-    def changePositions(self, spId, namedRange, newParticipants):
-
-
-        oldParticipants = self.getParticipantsList(spId, namedRange)
-
-        #pprint(oldParticipants)
-        #pprint(newParticipants)
-
-
-        oldParticipantsNoItems = { oldParticipants[i][1]:i for i in range(len(oldParticipants))}
-        pprint(oldParticipantsNoItems)
-
-        for new in newParticipants:
-            if new[1] not in oldParticipantsNoItems:
-
-                oldParticipants.append(['', new[1]])
-                oldParticipantsNoItems = {oldParticipants[i][1]: i for i in range(len(oldParticipants))}
-                sep = ''
-            else:
-                sep = ', '
-
-            #oldParticipants = self.changingPositions(new[0], oldParticipants)
-            index = oldParticipantsNoItems[new[1]]
-            for item in new[0].split(', '):
-
-                for i in range(len(oldParticipants)):
-
-                    if oldParticipants[i][0].find(item) >= 0:
-                        print(oldParticipants[i][0])
-                        # Если айтем один
-                        if oldParticipants[i][0].find(',') < 0:
-                            print('find ,')
-                            oldParticipants.pop(i)
-                            oldParticipantsNoItems = {oldParticipants[i][1]: i for i in range(len(oldParticipants))}
-                            index = oldParticipantsNoItems[new[1]]
-                        else:
-                            print('else')
-                            # Если айтем стоит не на первом месте
-                            if oldParticipants[i][0].find(item + ',') == 0:
-
-                                oldParticipants[i][0] = oldParticipants[i][0].replace(item + ', ', '')
+                            if oldParticipants[i][1] in actualParticipantsNoItems.keys():
+                               index = actualParticipantsNoItems[oldParticipants[i][1]]
+                               actualParticipants[index][0] = oldParticipants[i][0]
                             else:
-                                print('replace not 1')
-                                oldParticipants[i][0] = oldParticipants[i][0].replace(', ' + item, '')
-                    break
-                oldParticipants[index][0] += sep+item
+                                actualParticipants.append(oldParticipants[i])
+                       activeIndexes.add(i)
+
+            # заполняем данными человека, которому уступили
+            if new[1] in oldParticipantsNoItems.keys():
+                index = oldParticipantsNoItems[new[1]]
+                itemList = oldParticipants[index][0].split(', ')
+                itemList.extend(newItems)
+                activeIndexes.add(index)
+            else: itemList = newItems
+
+            if new[1] in actualParticipantsNoItems.keys():
+                index = actualParticipantsNoItems[new[1]]
+                actualParticipants[index][0] = self.makeItemString(itemList)
+            else:
+                actualParticipants.append([self.makeItemString(itemList), new[1]])
+
+        # позиции тех, у которых ничего неизменилось
+        inactiveIndexes = set([i for i in range(len(oldParticipants))]) - activeIndexes
+        inactiveParticipants = [oldParticipants[i] for i in inactiveIndexes]
+        actualParticipants.extend(inactiveParticipants)
 
 
-        #print('============')
-        #pprint(oldParticipants)
-        
+        # зачистка от пустых позиций
+        act = actualParticipants.copy()
+        for i in range(len(actualParticipants)):
+            if len(actualParticipants[i][0]) == 0:
+                act.remove(actualParticipants[i])
+        actualParticipants = act
 
+        actualParticipants.sort(key = lambda x: x[0].find(',') > 0 and int(x[0][0:x[0].find(',')]) or int(x[0][0:len(x[0])]))
+
+
+        request = { "participants": len(actualParticipants),
+                    "participantList": actualParticipants
+        }
+
+        self.updateTable(namedRange, request, self.getTopicUrl(spId, namedRange))
 
 
 

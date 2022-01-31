@@ -44,7 +44,7 @@ class Lots():
      properties = sheetList[self.spreadsheetsIds[name][1]]['properties']
      return properties['gridProperties']['rowCount']
 
- def findFreeRaw(self, sheetList, spId, namedRange):
+ def findFreeRaw(self, sheetList, spId, namedRange = '', typeCalling = 1):
      '''
      Поиск свободной ячейки в таблице
 
@@ -55,7 +55,7 @@ class Lots():
 
      spIds = list(self.spreadsheetsIds.items())
 
-     if namedRange.find("DCollect") == 0:
+     if namedRange.find("DCollect") == 0 or typeCalling == 1:
          startColumnIndex = 1
      else:
          startColumnIndex = 11
@@ -298,7 +298,7 @@ class Lots():
          startLetter = 'K'
          endLetter = 'S'
 
-     freeRow = self.findFreeRaw(sheetList, newSpId, collectId)
+     freeRow = self.findFreeRaw(sheetList, newSpId, collectId, typeCalling = 0)
      newRange = "{0}{1}".format(startLetter, freeRow)
 
      oldSheetTitle, oldRange = collectNamedRange.split("!")
@@ -333,21 +333,31 @@ class Lots():
      request.append(ce.repeatCells(newSpId, "{0}{1}:{0}{1}".format(chr(ord(endLetter)-1), newEnd), c.white_blue, hali="RIGHT"))
      request.append(ce.setCellBorder(newSpId, "{0}{1}:{2}{1}".format(chr(ord(endLetter)-1), newEnd, endLetter), all_same= False, bstyleList=[b.no_border, b.plain_black, b.plain_black, b.plain_black]))
 
-     '''
      # Сопостовление индексов для нового места
-     convertedRange = int(convertedRange[1][1:]) - int(convertedRange[0][1:]) + int(newRange[1:])
-     newRange += ':{0}{1}'.format(endLetter, convertedRange)
-     request.append(ce.addNamedRange(newSpId, newRange, collectId))
-     '''
+     if newSpId == self.spreadsheetsIds['Дашины лоты (Едет в РФ)'][0]:
+         convertedRange = int(convertedRange[1][1:]) - int(convertedRange[0][1:]) + int(newRange[1:])
+         newRange += ':{0}{1}'.format(endLetter, convertedRange)
+         request.append(ce.addNamedRange(newSpId, newRange, collectId))
+
 
      return request
 
  def setDateOfShipment(self, spId, namedRange):
 
+     '''
+     Ставит ячейку даты
+
+     :param spId:
+     :param namedRange: имя Именованного диапозона
+     :return:
+     '''
+
      now = datetime.now()
 
      data = []
      gotDate = now.strftime("%d.%m.%Y")
+
+     print(namedRange)
 
      if spId == self.spreadsheetsIds['Дашины лоты (Архив)'][0]:
         takeDate = ( now+relativedelta(months=+1)).strftime("%d.%m.%Y")
@@ -362,9 +372,6 @@ class Lots():
      lastLetter = re.findall('(\D+)', lastLetter)[0]
 
      indexes = re.findall('(\d+)', index)
-     print(namedRange)
-     print(index)
-
 
      ran = sheetTitle + "!{0}{1}:{0}{1}".format(lastLetter, indexes[1])
      data.append(ce.insertValue(spId, ran, info))
@@ -390,17 +397,24 @@ class Lots():
 
      request = []
 
-     sheetTitle, range = collectNamedRange.split("!")
+     sheetTitle, range_ = collectNamedRange.split("!")
      spId = self.spreadsheetsIds[sheetTitle[1:len(sheetTitle)-1]][0]
 
-     range = range.split(":")
+     range_ = range_.split(":")
 
-     self.startParticipantRow = int(range[0][1:]) + 14
-     rowsAmount = int(range[1][1:]) - self.startParticipantRow
+     self.startParticipantRow = int(range_[0][1:]) + 14
+     rowsAmount = int(range_[1][1:]) - self.startParticipantRow
 
      if participants <= rowsAmount:
-        rangeToDelete = "A{0}:I{1}".format( self.startParticipantRow + participants, int(range[1][1:])-1 )
+        rangeToDelete = "A{0}:I{1}".format( self.startParticipantRow + participants, int(range_[1][1:])-1 )
         request.append(ce.deleteRange(spId, rangeToDelete))
+     else:
+        difference = participants - rowsAmount
+        rangeToAdd = 'A{0}:I{1}'.format(self.startParticipantRow+1, self.startParticipantRow+difference)
+        request.append(ce.insertRange(spId, rangeToAdd))
+
+        for i in range(difference):
+            request.append(ce.mergeCells(spId, "B{0}:C{0}".format(self.startParticipantRow+1+i)))
 
      return request
 
@@ -433,13 +447,20 @@ class Lots():
      body["valueInputOption"] = "USER_ENTERED"
 
      data = []
+
      sheetTitle, rangeParticipants = collectNamedRange.split("!")
      spId = self.spreadsheetsIds[sheetTitle[1:len(sheetTitle)-1]][0]
 
 
      for i in range(len(participantsInfo)):
+
          ran = sheetTitle + "!A{0}".format(self.startParticipantRow+i)
-         data.append(ce.insertValue(spId, ran, self.listToString(participantsInfo[i][0]) ) )
+
+         if isinstance(participantsInfo[i][0], str):
+             info = participantsInfo[i][0]
+         else: info = self.listToString(participantsInfo[i][0])
+
+         data.append(ce.insertValue(spId, ran, info ) )
          ran = ran.replace('A', 'B', 1)
          data.append(ce.insertValue(spId, ran, participantsInfo[i][1] ) )
 
@@ -450,6 +471,11 @@ class Lots():
 
      body["data"] = data
      return body
+
+
+ def replacementLotBase(self, spId, namedRange, participantsList):
+
+        pprint(participantsList)
 
 
 

@@ -245,3 +245,14 @@ def updateSheetProperties(spId, addingRows):
     }
 
     return request
+
+
+def insertRange(spId, range):
+
+    request = { "insertRange": { "range": toRangeType(spId, range),
+                                 "shiftDimension" : "ROWS"
+                               }
+
+    }
+
+    return request

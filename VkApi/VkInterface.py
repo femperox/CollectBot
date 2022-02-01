@@ -442,11 +442,13 @@ class BoardBot:
             if len(comments) <= 1 or id == start_comment_id: break
             start_comment_id = id
 
+
             for comment in comments['items']:
 
                 text = comment['text']
 
                 urls = re.findall('- https://(\S+)', text)
+
 
                 if len(urls) == 0: continue
 
@@ -489,9 +491,14 @@ class BoardBot:
 
             self.vk.groups.ban(**params)
 
-    def find_comment(self, topic_name, parcel_num):
+    def find_comment(self, what_to_find):
+        '''
+        Поиск комментария по заданыым критериям
+        :param what_to_find: словарь вида { "topic_name" : ..., "type": Коллективка/Индивидуалка/Посылка , "number" : ...}
+        :return: возращает инфу о найденном комментарии
+        '''
 
-        topic_id = self._get_topic_by_name(topic_name)
+        topic_id = self._get_topic_by_name(what_to_find["topic_name"])
 
         start_comment_id = 1
         while True:
@@ -509,7 +516,43 @@ class BoardBot:
             if len(comments) <= 1 or id == start_comment_id: break
             start_comment_id = id
 
+            for comment in comments['items']:
+                if comment['text'].find(what_to_find['type']) == 0:
 
+
+                    number = comment['text'].split('\n')[0].split(' ')[1]
+                    number = int(re.findall("(\d+)", number)[0])
+
+                    if number == what_to_find["number"]:
+                        return comment
+                        break
+
+    def edit_comment(self, text, what_to_find):
+        '''
+        Редактирует определённый комментарий в обсуждении
+
+        :param text: текст, который необходимо вставить
+        :param what_to_find: what_to_find: словарь вида { "topic_name" : ..., "type": Коллективка/Индивидуалка/Посылка , "number" : ...}
+        :return:
+        '''
+
+        comment = self.find_comment(what_to_find)
+        old_text = comment['text']
+
+        start_part = re.search('Состояние: (.+)\n\n', old_text).span()[1]
+        end_part = re.search('\n\nПоедет', old_text).span()[0]
+
+        text = old_text[:start_part] + text + old_text[end_part:]
+
+        topic_id = self._get_topic_by_name(what_to_find["topic_name"])
+        params_edit = {
+            'group_id': self.__group_id,
+            'topic_id': topic_id,
+            'comment_id': comment['id'],
+            'message': text
+        }
+
+        self.vk.board.editComment(**params_edit)
 
     # ДОДЕЛАТЬ
     def payment_messege(self, mes, user_list):

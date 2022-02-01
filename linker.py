@@ -203,6 +203,7 @@ def transformToTableFormat(participantsList):
 
     return pList
 
+
 def getIdFromUrl(url):
     '''
     Получает номер id пользователя vk из ссылки
@@ -224,8 +225,11 @@ def transformToTopicFormat(participantsList):
     pList = ""
 
     for p in participantsList:
-        print(p)
-        items = table.sp.listToString(p[0])
+
+        if isinstance(p[0], list):
+            items = table.sp.listToString(p[0])
+        else:
+            items = p[0]
 
         try:
             participant = "@{0}({1})".format(getIdFromUrl(p[1][0]), p[1][1])
@@ -234,6 +238,30 @@ def transformToTopicFormat(participantsList):
         pList += "{0} - {1}\n".format(items, participant)
 
     return pList
+
+def tableToTopic(participantsList):
+    '''
+    Из формата для таблиц переводит в формат для обсуждения
+
+    :param participantsList: Список позиций и участников
+    :return: возвращает строчку
+    '''
+
+    pList = ""
+
+    for p in participantsList:
+
+        p_url = re.findall('"(.+)";', p[1])
+
+        try:
+            p_name =  re.findall('; "(.+)"\)', p[1])[0]
+            p[1] = [p_url[0], p_name]
+        except:
+            pass
+
+    return transformToTopicFormat(participantsList)
+
+
 
 def makeDistinctList(post_url):
     '''
@@ -277,7 +305,7 @@ def createTableTopic(post_url, zen_url = '', spId=0, topicName=0, items=0, img_u
 
     namedRange = createNamedRange(spId, letter, find)
 
-    participantsList = makeDistinctList(post_url)
+    participantsList = makeDistinctList(post_url) if post_url[0] != '' else []
     participantsList = checkParticipants(participantsList, items)
     participantsList.sort()
 
@@ -292,8 +320,14 @@ def createTableTopic(post_url, zen_url = '', spId=0, topicName=0, items=0, img_u
     table.createTable(spId, namedRange, participants= items, image = topicInfo[1][0], item = item)
     table.updateTable(namedRange, transformToTableFormat(participantsList), topicInfo[0])
 
-# Доработать!!!!
 def ShipmentToRussiaEvent(toSpId, collectList, indList):
+    '''
+    Активирует переброс лота с одного листа на другой
+    :param toSpId:
+    :param collectList: список номеров коллективок
+    :param indList: список номеров индивидуалок
+    :return:
+    '''
 
     lotList = {'DCollect': [x for x in collectList], 'DInd': [x for x in indList]}
 
@@ -302,13 +336,49 @@ def ShipmentToRussiaEvent(toSpId, collectList, indList):
             if lotList[key][i] != '':
                 table.moveTable(toSpId, key + lotList[key][i])
 
+def changePositions(userList, topic_name = "Лоты и индивидуалки"):
+
+    for yst in userList:
+
+        try:
+            number = int(yst[0])
+            lot = "Collect{0}".format(number)
+            type = "Коллективка"
+        except:
+            number = int(yst[0][1:])
+            lot = "Ind{0}".format(number)
+            type = "Индивидуалка"
+
+        id = vk.get_num_id(yst[1][1])
+        yst[1][1] = [id[1], id[0]]
+
+        newParticipants = transformToTableFormat([yst[1]])
+        try:
+            actualParticipants = table.changePositions('D'+lot, newParticipants["participantList"])
+        except:
+            actualParticipants = table.changePositions('L'+lot, newParticipants["participantList"])
+
+        actualParticipants = tableToTopic(actualParticipants)
+
+        what_to_find = {
+            "topic_name": topic_name,
+            "type": type,
+            "number": number
+        }
+
+        vk.edit_comment(actualParticipants, what_to_find)
+
+
+
+
 
 def console():
     choise = 0
 
     while choise != 3:
 
-      choise = int(input('Enter the number:\n1. Make Lot\t2. Shipment to Russia(BETA)\n3.Exit\nChoise: '))
+      choise = int(input('\nВведите номер:\n1. Сделать лот\t2. Отправки в РФ\n3. Выход\t4. Замена ссылок на теги '
+                         '\n5. Забанить\t6. Уступки\nВыбор: '))
 
       if choise == 1:
 
@@ -320,11 +390,11 @@ def console():
                   table.sp.spreadsheetsIds['ТестЛист'][0]
                 ]
 
-        print('\nChoose the tab list:\n'
+        print('\nВыберите лист из таблицы:\n'
               '1. Лерины лоты\t2. Дашины лоты\n'
               '3. Дашины индивидуалки\t4. Тестовый лист'
               )
-        choise1 = int(input('Choise: '))
+        choise1 = int(input('Выбор: '))
 
         spId = lists[choise1-1]
 
@@ -350,11 +420,11 @@ def console():
                  table.sp.spreadsheetsIds['ТестЛист'][0]
                 ]
 
-        print('\nChoose the tab list:\n'
+        print('\nВыберите лист из таблицы:\n'
               '1. Дашины лоты РФ\t2. Дашины лоты Архив\n'
               '3. Тестовый лист'
               )
-        choise1 = int(input('Choise: '))
+        choise1 = int(input('Выбор: '))
 
         spId = lists[choise1 - 1]
 
@@ -365,6 +435,63 @@ def console():
         indList = indList.split(', ')
 
         ShipmentToRussiaEvent(spId, collectList, indList)
+
+      elif choise == 4:
+          topics = [ 'Лоты и индивидуалки',
+                     'Гашапоны',
+                     'AmiAmi',
+                     'Коллект посылка до админа из Краснодара',
+                     'Коллект посылка до админа из Москвы'
+          ]
+
+          print('\nВыберите обсуждение:\n'
+                '1. {0}\t2. {1}\t3. {2}\n'
+                '4. {3}\t5. {4}'.format(topics[0], topics[1], topics[2], topics[3], topics[4])
+                )
+
+          choise1 = int(input('Выбор: '))
+          vk.replace_url(topics[choise1-1])
+
+      elif choise == 5:
+
+          user_list = []
+          print('\nTo stop enter any symbol\n')
+
+          i = 0
+
+          while True:
+            i += 1
+            url = input('user{0} URL: '.format(i))
+            if url.find('https://vk.com') < 0: break
+
+            commentary = input('user{0} commentary: '.format(i))
+
+            user_list.append({'id': url, 'comment': commentary })
+
+          vk.ban_users(user_list)
+
+      elif choise == 6:
+
+          user_list = []
+          print('\nTo stop enter any symbol\n')
+          print('Если индивидуалка, то прицепить любой символ перед номером. Пример: и56')
+          print('Запись в формате: 213 - 1, 2, 4\n')
+
+          i = 0
+
+          while True:
+              i += 1
+              url = input('user{0} URL: '.format(i))
+              if url.find('https://vk.com') < 0: break
+
+              lot, items = input('лот - уступка : '.format(i)).split(' - ')
+              #items = items.split(', ')
+
+              user_list.append([lot, [items, url]])
+
+          changePositions(user_list)
+
+
 
 # ДОДЕЛАТЬ
 def paymentMessage():
@@ -382,13 +509,6 @@ if __name__ == '__main__':
     table = gt.GoogleTabs()
     vk = vki.BoardBot()
 
-    #console()
-    namedRange = 'DCollect9001'
-    toSpId = 662031387
-    #toSpId = 158683993
-
-    table.moveTable(toSpId, namedRange)
-
-
+    console()
 
 

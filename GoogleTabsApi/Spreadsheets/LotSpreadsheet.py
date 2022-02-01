@@ -398,7 +398,11 @@ class Lots():
      request = []
 
      sheetTitle, range_ = collectNamedRange.split("!")
-     spId = self.spreadsheetsIds[sheetTitle[1:len(sheetTitle)-1]][0]
+
+     try:
+         spId = self.spreadsheetsIds[sheetTitle[1:len(sheetTitle)-1]][0]
+     except:
+         spId = self.spreadsheetsIds[sheetTitle][0]
 
      range_ = range_.split(":")
 
@@ -449,8 +453,10 @@ class Lots():
      data = []
 
      sheetTitle, rangeParticipants = collectNamedRange.split("!")
-     spId = self.spreadsheetsIds[sheetTitle[1:len(sheetTitle)-1]][0]
-
+     try:
+         spId = self.spreadsheetsIds[sheetTitle[1:len(sheetTitle) - 1]][0]
+     except:
+         spId = self.spreadsheetsIds[sheetTitle][0]
 
      for i in range(len(participantsInfo)):
 

@@ -39,7 +39,7 @@ def toUserEnteredFormat(color, hali = 'CENTER', vali = 'MIDDLE', textFormat = 'T
     :return: возвращает словарь для json запроса
     '''
     userEnteredFormat = {}
-
+    userEnteredFormat["numberFormat"] = { "type": "TEXT" }
     userEnteredFormat['horizontalAlignment'] = hali
     userEnteredFormat['verticalAlignment'] = vali
     userEnteredFormat['textFormat'] = {'bold': textFormat}

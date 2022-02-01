@@ -150,10 +150,15 @@ class GoogleTabs:
         :return: возвращает строку
         '''
 
+        try:
+            items = [int(item) for item in items]
 
-        items = [int(item) for item in items]
+        except:
+            items = items[1:]
+            items = [int(item) for item in items]
+
         items.sort()
-        itemString = (''.join([str(item)+', ' for item in items]))[0:-2]
+        itemString = (''.join([str(item) + ', ' for item in items]))[0:-2]
 
         return itemString
 
@@ -171,7 +176,7 @@ class GoogleTabs:
 
         return topicUrl
 
-    def changePositions(self, spId, namedRange, newParticipants):
+    def changePositions(self, namedRange, newParticipants):
         '''
         Производит автоматическую перепись позиций для участников лота (новые участники включаются)
         :param spId: айди листа в таблице
@@ -180,9 +185,16 @@ class GoogleTabs:
         :return:
         '''
 
+        sheetTitle = self.getJsonNamedRange(namedRange, typeCalling = 1)["range"].split("!")[0]
+        try:
+            sheetTitle = re.findall("'(.+)'", sheetTitle)[0]
+        except:
+            pass
+
+        spId = self.sp.spreadsheetsIds[sheetTitle][0]
+
         oldParticipants = self.getParticipantsList(spId, namedRange)
         actualParticipants = []
-
         activeIndexes = set()
 
         for new in newParticipants:
@@ -229,8 +241,8 @@ class GoogleTabs:
         # позиции тех, у которых ничего неизменилось
         inactiveIndexes = set([i for i in range(len(oldParticipants))]) - activeIndexes
         inactiveParticipants = [oldParticipants[i] for i in inactiveIndexes]
-        actualParticipants.extend(inactiveParticipants)
 
+        actualParticipants.extend(inactiveParticipants)
 
         # зачистка от пустых позиций
         act = actualParticipants.copy()
@@ -241,14 +253,13 @@ class GoogleTabs:
 
         actualParticipants.sort(key = lambda x: x[0].find(',') > 0 and int(x[0][0:x[0].find(',')]) or int(x[0][0:len(x[0])]))
 
-
         request = { "participants": len(actualParticipants),
                     "participantList": actualParticipants
         }
 
         self.updateTable(namedRange, request, self.getTopicUrl(spId, namedRange))
 
-
+        return actualParticipants
 
 
 

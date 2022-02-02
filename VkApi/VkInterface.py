@@ -7,6 +7,7 @@ import random
 import json
 import re
 import time
+from datetime import datetime
 
 class BoardBot:
 
@@ -539,7 +540,11 @@ class BoardBot:
         comment = self.find_comment(what_to_find)
         old_text = comment['text']
 
-        start_part = re.search('Состояние: (.+)\n\n', old_text).span()[1]
+        try:
+            start_part = re.search('Состояние: (.+)\n\n', old_text).span()[1]
+        except:
+            # Состояние: Едет в РФ \n tracks \n\n позиции
+            start_part = re.search('\n\n\d', old_text).span()[1] - 1
         end_part = re.search('\n\nПоедет', old_text).span()[0]
 
         text = old_text[:start_part] + text + old_text[end_part:]
@@ -553,6 +558,74 @@ class BoardBot:
         }
 
         self.vk.board.editComment(**params_edit)
+
+    def _get_topic_by_name(self, topic_name: str) -> int:
+        """
+        Args:
+            topic_name (str): Название обсуждения
+
+        Returns:
+            int: ID обсуждения с именем topic_name или -1
+        """
+        try:
+            vk_response = self.vk.board.getTopics(group_id=self.__group_id, preview_length=0)
+            topics = vk_response.get('items', [])
+            for topic in topics:
+                if topic['title'] == topic_name:
+                    return topic['id']
+        except:
+            return -1
+
+
+    def _get_album_by_name(self, album_name: str) -> int:
+        """
+        Args:
+            album_name (str): Название альбома
+
+        Returns:
+            int: ID альбома с именем album_name и ID заглавной фотографии альбома или -1
+        """
+
+        try:
+            # идентификатор сообщества в параметре owner_id необходимо указывать со знаком "-"
+            vk_response = self.vk.photos.getAlbums(owner_id = '-'+self.__group_id, need_covers = 1)
+            albums = vk_response.get('items', [])
+            for album in albums:
+                if album['title'] == album_name:
+                    return album['id'], album["thumb_id"]
+        except:
+
+            return -1, -1
+
+
+    def delete_photos(self, album_name: str, end_date):
+
+
+        album_id, cover_id = self._get_album_by_name(album_name)
+
+        # идентификатор сообщества в параметре owner_id необходимо указывать со знаком "-"
+        params = { "owner_id": '-' + self.__group_id,
+                   "album_id": album_id,
+                   "extended": 1,
+                   "count": 1000
+        }
+
+        photos = self.vk.photos.get(**params)
+
+        params_delete = { "owner_id": '-' + self.__group_id,
+        }
+
+        for photo in photos["items"]:
+            if cover_id != photo["id"]:
+                date = (datetime.fromtimestamp(int(photo["date"]))).date()
+                if date < end_date:
+                    params_delete["photo_id"] = photo["id"]
+                    self.vk.photos.delete(**params_delete)
+                else:
+                    break
+
+
+
 
     # ДОДЕЛАТЬ
     def payment_messege(self, mes, user_list):

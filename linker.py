@@ -4,6 +4,8 @@ import VkApi.VkInterface as vki
 import misc.ParseZen as zen
 import re
 
+from datetime import datetime
+
 def createNamedRange(spId, who, find):
     '''
     Генерирует именованный диапозон. Нужно доработать
@@ -510,5 +512,8 @@ if __name__ == '__main__':
     vk = vki.BoardBot()
 
     console()
+
+    #date = datetime(2021,12,1).date()
+    #vk.delete_photos("Ваши хотелки", date)
 
 

@@ -24,16 +24,17 @@ class GoogleTabs:
 
         self.sp = ls.Lots(self.getSheetListProperties())
 
-    def getJsonNamedRange(self,namedRange, typeCalling = 0):
+    def getJsonNamedRange(self,namedRange, typeCalling = 0, valueRenderOption ="FORMULA"):
         '''
         Запрос на поиск именного запроса по его имени
 
         :param namedRange: имя Именованного диапозона
         :param typeCalling: тип вызова. 0 - получить только диапозон, 1 - получить полную инфу о диапозоне
+        :param valueRenderOption: в какой форме получать содержимое ячеек
         :return: возвращает часть реквеста, а именно диапозон
         '''
         try:
-           result = self.__service.spreadsheets().values().get(spreadsheetId= self.__spreadsheet_id, range=namedRange, valueRenderOption ="FORMULA").execute()
+           result = self.__service.spreadsheets().values().get(spreadsheetId= self.__spreadsheet_id, range=namedRange, valueRenderOption = valueRenderOption).execute()
         except :
            result = {"range": -1}
 
@@ -65,21 +66,23 @@ class GoogleTabs:
 
         return imgUrl
 
-    def getParticipantsList(self, spId, namedRange):
+    def getParticipantsList(self, namedRange):
 
-       info = self.getJsonNamedRange(namedRange, typeCalling = 1)
+       info_urls = self.getJsonNamedRange(namedRange, typeCalling = 1)
+       info_items = self.getJsonNamedRange(namedRange, typeCalling = 1, valueRenderOption= "FORMATTED_VALUE")
 
-       info = info['values'][14:]
+       info_urls = info_urls['values'][14:]
+       info_items = info_items['values'][14:]
 
        i = 0
        participantList = []
-       while info[i][0] != "СУММАРНО":
+       while info_urls[i][0] != "СУММАРНО":
 
            # Когда позицию никто не взял
            try:
-               participantList.append([str(info[i][0]), info[i][1]])
+               participantList.append([str(info_items[i][0]), info_urls[i][1]])
            except:
-               participantList.append([str(info[i][0]), ''])
+               participantList.append([str(info_items[i][0]), ''])
            i += 1
 
        return participantList
@@ -163,10 +166,9 @@ class GoogleTabs:
         return itemString
 
 
-    def getTopicUrl(self, spId, namedRange):
+    def getTopicUrl(self, namedRange):
         '''
         Получение ссылки из обсуждения на конкретный лот
-        :param spId: айди листа в таблице
         :param namedRange: имя Именованного диапозона
         :return: строка со ссылкой
         '''
@@ -193,9 +195,11 @@ class GoogleTabs:
 
         spId = self.sp.spreadsheetsIds[sheetTitle][0]
 
-        oldParticipants = self.getParticipantsList(spId, namedRange)
+        oldParticipants = self.getParticipantsList(namedRange)
         actualParticipants = []
         activeIndexes = set()
+
+        pprint(oldParticipants)
 
         for new in newParticipants:
 
@@ -225,6 +229,7 @@ class GoogleTabs:
                        activeIndexes.add(i)
 
             # заполняем данными человека, которому уступили
+
             if new[1] in oldParticipantsNoItems.keys():
                 index = oldParticipantsNoItems[new[1]]
                 itemList = oldParticipants[index][0].split(', ')
@@ -257,7 +262,7 @@ class GoogleTabs:
                     "participantList": actualParticipants
         }
 
-        self.updateTable(namedRange, request, self.getTopicUrl(spId, namedRange))
+        self.updateTable(namedRange, request, self.getTopicUrl(namedRange))
 
         return actualParticipants
 

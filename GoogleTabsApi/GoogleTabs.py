@@ -6,6 +6,7 @@ import re
 from operator import itemgetter
 
 import GoogleTabsApi.Cells_Editor as ce
+from GoogleTabsApi.Styles.Colors import Colors as c
 import GoogleTabsApi.Spreadsheets.LotSpreadsheet as ls
 
 class GoogleTabs:
@@ -42,14 +43,42 @@ class GoogleTabs:
         else: return result
 
 
-    def getSheetListProperties(self):
+    def getSheetListProperties(self, includeGridData = False):
         '''
 
         :return: Возвращает информацию о листах
         '''
 
-        spreadsheet = self.__service.spreadsheets().get(spreadsheetId = self.__spreadsheet_id).execute()
+        spreadsheet = self.__service.spreadsheets().get(spreadsheetId = self.__spreadsheet_id, includeGridData = includeGridData).execute()
         return spreadsheet.get('sheets')
+
+    def getPaymentStatus(self, namedRange):
+
+        sheetTitle, range_ = self.getJsonNamedRange(namedRange).split('!')
+
+        start, end = range_.split(':')
+
+        start = chr(ord(start[0])+3) + str(int(start[1:])+14)
+        end = chr(ord(end[0])-3) + str(int(end[1:])-1)
+
+        range_ = '{0}!{1}:{2}'.format(sheetTitle, start, end)
+
+
+        spreadsheet = self.__service.spreadsheets().get(spreadsheetId=self.__spreadsheet_id, ranges = range_,
+                                                        includeGridData=True).execute()
+
+        info = spreadsheet["sheets"][0]['data'][0]["rowData"]
+        paymentInfo = []
+
+        for row in info:
+
+            payment = ''
+            for column in row['values']:
+                if column['effectiveFormat']['backgroundColor'] == c.light_green:
+                    payment += '+'
+            paymentInfo.append(payment)
+
+        return paymentInfo
 
     def getImageURLFromNamedRange(self, namedRange):
         '''
@@ -199,8 +228,6 @@ class GoogleTabs:
         actualParticipants = []
         activeIndexes = set()
 
-        pprint(oldParticipants)
-
         for new in newParticipants:
 
             # связка хохяин - индекс
@@ -264,7 +291,9 @@ class GoogleTabs:
 
         self.updateTable(namedRange, request, self.getTopicUrl(namedRange))
 
-        return actualParticipants
+        paymentInfo = self.getPaymentStatus(namedRange)
+
+        return actualParticipants, paymentInfo
 
 
 

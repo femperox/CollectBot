@@ -407,18 +407,24 @@ class Lots():
      range_ = range_.split(":")
 
      self.startParticipantRow = int(range_[0][1:]) + 14
+     startLetter = range_[0][0]
+     endLetter = range_[1][0]
+
      rowsAmount = int(range_[1][1:]) - self.startParticipantRow
 
      if participants <= rowsAmount:
-        rangeToDelete = "A{0}:I{1}".format( self.startParticipantRow + participants, int(range_[1][1:])-1 )
+        rangeToDelete = "{2}{0}:{3}{1}".format( self.startParticipantRow + participants, int(range_[1][1:])-1, startLetter, endLetter )
         request.append(ce.deleteRange(spId, rangeToDelete))
      else:
         difference = participants - rowsAmount
-        rangeToAdd = 'A{0}:I{1}'.format(self.startParticipantRow+1, self.startParticipantRow+difference)
+        rangeToAdd = '{2}{0}:{3}{1}'.format(self.startParticipantRow+1, self.startParticipantRow+difference, startLetter, endLetter)
         request.append(ce.insertRange(spId, rangeToAdd))
 
+        mCell1 = chr(ord(startLetter)+1)
+        mCell2 = chr(ord(startLetter)+2)
+
         for i in range(difference):
-            request.append(ce.mergeCells(spId, "B{0}:C{0}".format(self.startParticipantRow+1+i)))
+            request.append(ce.mergeCells(spId, "{1}{0}:{2}{0}".format(self.startParticipantRow+1+i , mCell1, mCell2)))
 
      return request
 
@@ -452,7 +458,11 @@ class Lots():
 
      data = []
 
-     sheetTitle, rangeParticipants = collectNamedRange.split("!")
+     sheetTitle, range_ = collectNamedRange.split("!")
+     range_ = range_.split(":")
+     startLetter = range_[0][0]
+     nameCell = chr(ord(startLetter)+1)
+     endLetter = range_[1][0]
      try:
          spId = self.spreadsheetsIds[sheetTitle[1:len(sheetTitle) - 1]][0]
      except:
@@ -460,18 +470,19 @@ class Lots():
 
      for i in range(len(participantsInfo)):
 
-         ran = sheetTitle + "!A{0}".format(self.startParticipantRow+i)
+         ran = sheetTitle + "!{1}{0}".format(self.startParticipantRow+i ,startLetter)
 
          if isinstance(participantsInfo[i][0], str):
              info = participantsInfo[i][0]
          else: info = self.listToString(participantsInfo[i][0])
 
          data.append(ce.insertValue(spId, ran, info ) )
-         ran = ran.replace('A', 'B', 1)
+         ran = ran.replace(startLetter, nameCell, 1)
+
          data.append(ce.insertValue(spId, ran, participantsInfo[i][1] ) )
 
      topicUrl = '=HYPERLINK("{0}"; "тык")'.format(topicUrl)
-     ran = sheetTitle + "!I{0}".format(self.startLotRow+2)
+     ran = sheetTitle + "!{1}{0}".format(self.startLotRow+2, endLetter)
      data.append(ce.insertValue(spId, ran, topicUrl))
 
 

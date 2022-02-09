@@ -222,17 +222,15 @@ class GoogleTabs:
         except:
             pass
 
-        spId = self.sp.spreadsheetsIds[sheetTitle][0]
-
         oldParticipants = self.getParticipantsList(namedRange)
         actualParticipants = []
         activeIndexes = set()
 
-        for new in newParticipants:
+        # связка хохяин - индекс
+        #oldParticipantsNoItems = {part[1]: oldParticipants.index(part) for part in oldParticipants}
+        actualParticipantsNoItems = {part[1]: actualParticipants.index(part) for part in actualParticipants}
 
-            # связка хохяин - индекс
-            oldParticipantsNoItems = {part[1]: oldParticipants.index(part) for part in oldParticipants}
-            actualParticipantsNoItems = {part[1] : actualParticipants.index(part) for part in actualParticipants}
+        for new in newParticipants:
 
             newItems = new[0].split(', ')
 
@@ -249,20 +247,27 @@ class GoogleTabs:
                             oldParticipants[i][0] = self.makeItemString(oldItems)
 
                             if oldParticipants[i][1] in actualParticipantsNoItems.keys():
+
                                index = actualParticipantsNoItems[oldParticipants[i][1]]
                                actualParticipants[index][0] = oldParticipants[i][0]
                             else:
+
                                 actualParticipants.append(oldParticipants[i])
                        activeIndexes.add(i)
 
-            # заполняем данными человека, которому уступили
+            # связка хохяин - индекс
+            oldParticipantsNoItems = {part[1]: oldParticipants.index(part) for part in oldParticipants}
+            actualParticipantsNoItems = {part[1]: actualParticipants.index(part) for part in actualParticipants}
 
+            # заполняем данными человека, которому уступили
             if new[1] in oldParticipantsNoItems.keys():
                 index = oldParticipantsNoItems[new[1]]
                 itemList = oldParticipants[index][0].split(', ')
                 itemList.extend(newItems)
                 activeIndexes.add(index)
-            else: itemList = newItems
+            else:
+                itemList = newItems
+
 
             if new[1] in actualParticipantsNoItems.keys():
                 index = actualParticipantsNoItems[new[1]]

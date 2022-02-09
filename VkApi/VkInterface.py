@@ -502,6 +502,7 @@ class BoardBot:
         topic_id = self._get_topic_by_name(what_to_find["topic_name"])
 
         start_comment_id = 1
+
         while True:
             params = {
                 'group_id': self.__group_id,
@@ -520,7 +521,6 @@ class BoardBot:
             for comment in comments['items']:
                 if comment['text'].find(what_to_find['type']) == 0:
 
-
                     number = comment['text'].split('\n')[0].split(' ')[1]
                     number = int(re.findall("(\d+)", number)[0])
 
@@ -528,12 +528,13 @@ class BoardBot:
                         return comment
                         break
 
+
     def edit_comment(self, text, what_to_find):
         '''
         Редактирует определённый комментарий в обсуждении
 
         :param text: текст, который необходимо вставить
-        :param what_to_find: what_to_find: словарь вида { "topic_name" : ..., "type": Коллективка/Индивидуалка/Посылка , "number" : ...}
+        :param what_to_find: словарь вида { "topic_name" : ..., "type": Коллективка/Индивидуалка/Посылка , "number" : ...}
         :return:
         '''
 
@@ -558,6 +559,52 @@ class BoardBot:
         }
 
         self.vk.board.editComment(**params_edit)
+
+
+    def edit_status_comment(self, what_to_find, status = '', payment = []):
+        '''
+
+        :param what_to_find: словарь вида { "topic_name" : ..., "type": Коллективка/Индивидуалка/Посылка , "number" : ...}
+        :param status: статус ['Выкупается', 'Едет на склад', 'На складе', 'Едет в РФ', 'На руках', 'Без статуса']. Может быть пустым
+        :param payment: список тегов с оплатой. Может быть пустым
+        :return:
+        '''
+
+        comment = self.find_comment(what_to_find)
+
+        old_text = comment['text']
+
+        text = ''
+
+        # Изменение статуса
+        if len(status) > 0:
+            status_end_part =  re.search('\n\n\d', old_text).span()[1] - 3
+            status_start_part = re.search('Состояние: ', old_text).span()[1]
+            text = old_text[:status_start_part] + status + old_text[status_end_part:]
+
+        # Изменение инфы об оплате
+        if len(payment) > 0:
+
+            # если статус был уже изменён
+            if len(text)>0:
+                participants_start_part = re.search('\n\n\d', text).span()[1] - 1
+                participants_end_part = re.search('\n\nПоедет', text).span()[0] + 1
+            else:
+                participants_start_part = re.search('\n\n\d', old_text).span()[1] - 1
+                participants_end_part = re.search('\n\nПоедет', old_text).span()[0] + 1
+
+            text = text[:participants_start_part] + payment + text[participants_end_part:]
+
+        topic_id = self._get_topic_by_name(what_to_find["topic_name"])
+        params_edit = {
+            'group_id': self.__group_id,
+            'topic_id': topic_id,
+            'comment_id': comment['id'],
+            'message': text
+        }
+
+        self.vk.board.editComment(**params_edit)
+
 
     def _get_topic_by_name(self, topic_name: str) -> int:
         """

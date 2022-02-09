@@ -4,6 +4,7 @@ import VkApi.VkInterface as vki
 import misc.ParseZen as zen
 import re
 
+
 from datetime import datetime
 
 def createNamedRange(spId, who, find):
@@ -241,7 +242,7 @@ def transformToTopicFormat(participantsList):
 
     return pList
 
-def tableToTopic(participantsList):
+def tableToTopic(participantsList, paymentInfo):
     '''
     Из формата для таблиц переводит в формат для обсуждения
 
@@ -261,7 +262,21 @@ def tableToTopic(participantsList):
         except:
             pass
 
-    return transformToTopicFormat(participantsList)
+    topicFormat = transformToTopicFormat(participantsList)
+
+    topicFormat = topicFormat.split('\n')
+
+
+    for i in range(len(topicFormat)):
+        try:
+            topicFormat[i] += ' ' + paymentInfo[i]
+        except:
+            pass
+
+
+    topicFormat = "".join([str(item) + '\n' for item in topicFormat])
+
+    return topicFormat
 
 
 
@@ -338,6 +353,27 @@ def ShipmentToRussiaEvent(toSpId, collectList, indList):
             if lotList[key][i] != '':
                 table.moveTable(toSpId, key + lotList[key][i])
 
+def changeStatus(stat, collectList, indList, payment, topic_name = "Лоты и индивидуалки"):
+
+
+    lotList = {'DCollect': [int(x) if len(x)>0 else x for x in collectList], 'DInd': [int(x) if len(x)>0 else x for x in indList]}
+    typeList = {'DCollect': 'Коллективка', 'DInd': 'Индивидуалка'}
+
+    what_to_find = {"topic_name": topic_name} # "type": "Коллективка", "number": 234}
+
+    for key in lotList.keys():
+        what_to_find['type'] = typeList[key]
+        for i in range(len(lotList[key])):
+            if lotList[key][i] != '':
+                what_to_find['number'] = lotList[key][i]
+                pay = ''
+                if payment == 'y':
+                    pay = table.getPaymentStatus('{0}{1}'.format(key, lotList[key][i]))
+                    participants = table.getParticipantsList('{0}{1}'.format(key, lotList[key][i]))
+                    pay = tableToTopic(participants, pay)
+
+                vk.edit_status_comment(what_to_find, status= stat, payment= pay)
+
 def changePositions(userList, topic_name = "Лоты и индивидуалки"):
 
     for yst in userList:
@@ -356,11 +392,12 @@ def changePositions(userList, topic_name = "Лоты и индивидуалки
 
         newParticipants = transformToTableFormat([yst[1]])
         try:
-            actualParticipants = table.changePositions('D'+lot, newParticipants["participantList"])
+            actualParticipants, paymentInfo = table.changePositions('D'+lot, newParticipants["participantList"])
         except:
-            actualParticipants = table.changePositions('L'+lot, newParticipants["participantList"])
+            actualParticipants, paymentInfo = table.changePositions('L'+lot, newParticipants["participantList"])
 
-        actualParticipants = tableToTopic(actualParticipants)
+
+        actualParticipants = tableToTopic(actualParticipants, paymentInfo)
 
         what_to_find = {
             "topic_name": topic_name,
@@ -380,7 +417,8 @@ def console():
     while choise != 3:
 
       choise = int(input('\nВведите номер:\n1. Сделать лот\t2. Отправки в РФ\n3. Выход\t4. Замена ссылок на теги '
-                         '\n5. Забанить\t6. Уступки\nВыбор: '))
+                         '\n5. Забанить\t6. Уступки\n'
+                         '7. Обновление статуса лотов\nВыбор: '))
 
       if choise == 1:
 
@@ -492,6 +530,37 @@ def console():
               user_list.append([lot, [items, url]])
 
           changePositions(user_list)
+      elif choise == 7:
+
+          status = ['Выкупается', 'Едет на склад', 'На складе', 'Едет в РФ', 'На руках', 'Без статуса']
+
+          while True:
+                  print('\nTo stop enter any symbol\n')
+                  print('Выберите статус:\n'
+                    '1. {0}\t2. {1}\t3. {2}\n'
+                    '4. {3}\t5. {4}\t6. {5}'.format(status[0], status[1], status[2], status[3], status[4], status[5])
+                    )
+
+                  choise1 = int(input('Выбор: '))
+                  stat = status[choise1-1]
+                  if stat == 'Едет в РФ':
+                      print('Через запятую перечислите трек-номера\n')
+                      trakcs = input('Треки: ').split(', ')
+
+                      for trakc in trakcs:
+                          stat += '\n' + trakc
+                  if stat == 'Без статуса':
+                      stat = ''
+
+                  collectList = input("Enter collect's num using comma(, ) (might be empty): ")
+                  collectList = collectList.split(', ')
+
+                  indList = input("Enter ind's num using comma(, ) (might be empty): ")
+                  indList = indList.split(', ')
+
+                  payment = input('Нужна ли информация об оплатах? y/n: ')
+
+                  changeStatus(stat, collectList, indList, payment)
 
 
 
@@ -512,6 +581,11 @@ if __name__ == '__main__':
     vk = vki.BoardBot()
 
     console()
+
+    #user_list = [["1", "https://vk.com/id146155443"]]
+    #table.changePositions('DCollect9000', user_list)
+    what_to_find = { "topic_name" : "Лоты и индивидуалки", "type": "Коллективка" , "number": 234 }
+    vk.edit_status_comment(what_to_find, status='На складе', payment=table.getPaymentStatus('DCollect234'))
 
     #date = datetime(2021,12,1).date()
     #vk.delete_photos("Ваши хотелки", date)

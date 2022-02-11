@@ -5,6 +5,7 @@ import re
 from pprint import pprint
 from datetime import datetime
 from dateutil.relativedelta import *
+from multipledispatch import dispatch
 import time
 
 class Lots():
@@ -386,7 +387,8 @@ class Lots():
      return body
 
 
- def updateBaseOfLot(self, collectNamedRange, participants):
+ @dispatch(str, int)
+ def updateBaseOfLot(self, collectNamedRange, participants:int):
      '''
      Обновление таблицы в соотвествии с количеством участников коллективки
 
@@ -413,7 +415,7 @@ class Lots():
      rowsAmount = int(range_[1][1:]) - self.startParticipantRow
 
      if participants <= rowsAmount:
-        rangeToDelete = "{2}{0}:{3}{1}".format( self.startParticipantRow + participants, int(range_[1][1:])-1, startLetter, endLetter )
+        rangeToDelete = "{2}{0}:{3}{1}".format(self.startParticipantRow + participants, int(range_[1][1:])-1, startLetter, endLetter )
         request.append(ce.deleteRange(spId, rangeToDelete))
      else:
         difference = participants - rowsAmount
@@ -425,6 +427,37 @@ class Lots():
 
         for i in range(difference):
             request.append(ce.mergeCells(spId, "{1}{0}:{2}{0}".format(self.startParticipantRow+1+i , mCell1, mCell2)))
+
+     return request
+
+ @dispatch(str, dict)
+ def updateBaseOfLot(self, collectNamedRange, additionalInfo:dict):
+
+     request = self.updateBaseOfLot(collectNamedRange, additionalInfo['amount'])
+
+     sheetTitle, range_ = collectNamedRange.split("!")
+
+     try:
+         spId = self.spreadsheetsIds[sheetTitle[1:len(sheetTitle) - 1]][0]
+     except:
+         spId = self.spreadsheetsIds[sheetTitle][0]
+
+     range_ = range_.split(":")
+
+     self.startParticipantRow = int(range_[0][1:]) + 14
+     startLetter = range_[0][0]
+     endLetter = range_[1][0]
+
+     rowsAmount = int(range_[1][1:]) - self.startParticipantRow
+
+     paymentCells = [chr(ord(startLetter) + 3 + i) for i in range(4)]
+
+     for i in range(len(additionalInfo["paymentInfo"])):
+         for j in range(len(additionalInfo["paymentInfo"][i])):
+
+            range_ = "{0}{1}:{0}{1}".format(paymentCells[j], self.startParticipantRow+i)
+            request.append(ce.repeatCells(spId, range_, additionalInfo["paymentInfo"][i][j]))
+            request.append(ce.setCellBorder(spId, range_, only_outer=True, bstyleList=b.plain_black))
 
      return request
 
@@ -509,7 +542,7 @@ class Lots():
      nameCell = chr(ord(startLetter) + 1)
      endLetter = range_[1][0]
 
-     paymentCells = [chr(ord(nameCell)+2+i) for i in range(3)]
+     paymentCells = [chr(ord(nameCell)+2+i) for i in range(4)]
 
      try:
          spId = self.spreadsheetsIds[sheetTitle[1:len(sheetTitle) - 1]][0]
@@ -538,10 +571,6 @@ class Lots():
      body["data"] = data
      return body
 
-
- def replacementLotBase(self, spId, namedRange, participantsList):
-
-        pprint(participantsList)
 
 
 

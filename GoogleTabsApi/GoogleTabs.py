@@ -100,7 +100,7 @@ class GoogleTabs:
         start, end = range_.split(':')
 
         start = chr(ord(start[0]) + 3) + str(int(start[1:]) + 14)
-        end = chr(ord(end[0]) - 3) + str(int(end[1:]) - 1)
+        end = chr(ord(end[0]) - 2) + str(int(end[1:]) - 1)
 
         range_ = '{0}!{1}:{2}'.format(sheetTitle, start, end)
 
@@ -113,8 +113,10 @@ class GoogleTabs:
         for row in info:
 
             payment = []
+            colors = []
             for column in row['values']:
                 #формула
+                colors.append(column['effectiveFormat']['backgroundColor'])
                 try:
                     payment.append(column['userEnteredValue']['formulaValue'])
                 except:
@@ -125,7 +127,8 @@ class GoogleTabs:
                     except:
                         payment.append('')
 
-            paymentInfo.append(payment)
+
+            paymentInfo.append([payment,colors])
 
         return paymentInfo
 
@@ -268,16 +271,24 @@ class GoogleTabs:
 
 
         # информация об участниках, позициях и оплатах хранится как:
-        # participant = [ ['позиции через запятую', 'Гиперссылка на участника'], [сумма, оплат, участника] ]
+        # participant = [ ['позиции через запятую', 'Гиперссылка на участника'], [ [сумма, оплат, участника], [цвета, каждой, колонки] ]
         # работа в основном по participant[0]. Остальное дополнительная информация
+
+        newParticipantColor = c.light_red
+        newPayment = [newParticipantColor for i in range(4)]
 
         oldParticipants = add.concatList(self.getParticipantsList(namedRange), self.getPaymentAmount(namedRange))
         actualParticipants = []
         activeIndexes = set()
 
+        # доставка в РФ может быть не выставлена
+        whiteCount = [x[1][1][2] for x in oldParticipants].count(c.white)
+        if len(oldParticipants) == whiteCount:
+            newPayment[2] = c.white
+
         paymentNew = []
         for new in newParticipants:
-            paymentNew.append(['' for i in range(3)])
+            paymentNew.append([['' for i in range(4)], newPayment])
         newParticipants = add.concatList(newParticipants, paymentNew)
 
         # связка хохяин - индекс
@@ -327,7 +338,7 @@ class GoogleTabs:
                 index = actualParticipantsNoItems[new[0][1]]
                 actualParticipants[index][0][0] = self.makeItemString(itemList)
             else:
-                actualParticipants.append([[self.makeItemString(itemList), new[0][1]], ['' for i in range(3)]])
+                actualParticipants.append([[self.makeItemString(itemList), new[0][1]], [['' for i in range(4)], newPayment]])
 
         # позиции тех, у которых ничего неизменилось
         inactiveIndexes = set([i for i in range(len(oldParticipants))]) - activeIndexes
@@ -344,19 +355,21 @@ class GoogleTabs:
 
         actualParticipants.sort(key=lambda x: x[0][0].find(',') > 0 and int(x[0][0][0:x[0][0].find(',')]) or int(x[0][0][0:len(x[0][0])]))
 
-        paymentAmount = [x[1] for x in actualParticipants]
+        paymentAmount = [x[1][0] for x in actualParticipants]
+        paymentInfo = [x[1][1] for x in actualParticipants]
         actualParticipants = [x[0] for x in actualParticipants]
 
-        request = { "participants": len(actualParticipants),
+        request = { "participants": {"amount": len(actualParticipants), "paymentInfo": paymentInfo
+                                    },
                     "participantList": actualParticipants
         }
 
-        additionalInfo = { "payment": paymentAmount
+        additionalInfo = { "payment": paymentAmount}
 
-        }
 
         self.updateTable(namedRange, request, additionalInfo["payment"])
 
+        # инфа об платах для обновления комментария в обсуждении
         paymentInfo = self.getPaymentStatus(namedRange)
 
         return actualParticipants, paymentInfo

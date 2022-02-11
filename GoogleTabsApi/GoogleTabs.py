@@ -8,6 +8,7 @@ from operator import itemgetter
 import GoogleTabsApi.Cells_Editor as ce
 from GoogleTabsApi.Styles.Colors import Colors as c
 import GoogleTabsApi.Spreadsheets.LotSpreadsheet as ls
+import misc.Additionals as add
 
 class GoogleTabs:
 
@@ -53,6 +54,12 @@ class GoogleTabs:
         return spreadsheet.get('sheets')
 
     def getPaymentStatus(self, namedRange):
+        '''
+        Информация о статусе оплат каждого участника
+
+        :param namedRange: имя Именованного диапозона
+        :return: список строк, состоящих из '+'
+        '''
 
         sheetTitle, range_ = self.getJsonNamedRange(namedRange).split('!')
 
@@ -76,6 +83,48 @@ class GoogleTabs:
             for column in row['values']:
                 if column['effectiveFormat']['backgroundColor'] == c.light_green:
                     payment += '+'
+            paymentInfo.append(payment)
+
+        return paymentInfo
+
+    def getPaymentAmount(self, namedRange):
+        '''
+        Информация о значениях оплат
+
+        :param namedRange: имя Именованного диапозона
+        :return: список сумм к оплате за каждую категорию
+        '''
+
+        sheetTitle, range_ = self.getJsonNamedRange(namedRange).split('!')
+
+        start, end = range_.split(':')
+
+        start = chr(ord(start[0]) + 3) + str(int(start[1:]) + 14)
+        end = chr(ord(end[0]) - 3) + str(int(end[1:]) - 1)
+
+        range_ = '{0}!{1}:{2}'.format(sheetTitle, start, end)
+
+        spreadsheet = self.__service.spreadsheets().get(spreadsheetId=self.__spreadsheet_id, ranges=range_,
+                                                        includeGridData=True).execute()
+
+        info = spreadsheet["sheets"][0]['data'][0]["rowData"]
+        paymentInfo = []
+
+        for row in info:
+
+            payment = []
+            for column in row['values']:
+                #формула
+                try:
+                    payment.append(column['userEnteredValue']['formulaValue'])
+                except:
+                    #значение
+                    try:
+                        payment.append(column['userEnteredValue']['numberValue'])
+                    #пусто
+                    except:
+                        payment.append('')
+
             paymentInfo.append(payment)
 
         return paymentInfo
@@ -207,6 +256,7 @@ class GoogleTabs:
 
         return topicUrl
 
+
     def changePositions(self, namedRange, newParticipants):
         '''
         Производит автоматическую перепись позиций для участников лота (новые участники включаются)
@@ -216,64 +266,68 @@ class GoogleTabs:
         :return:
         '''
 
-        sheetTitle = self.getJsonNamedRange(namedRange, typeCalling = 1)["range"].split("!")[0]
-        try:
-            sheetTitle = re.findall("'(.+)'", sheetTitle)[0]
-        except:
-            pass
 
-        oldParticipants = self.getParticipantsList(namedRange)
+        # информация об участниках, позициях и оплатах хранится как:
+        # participant = [ ['позиции через запятую', 'Гиперссылка на участника'], [сумма, оплат, участника] ]
+        # работа в основном по participant[0]. Остальное дополнительная информация
+
+        oldParticipants = add.concatList(self.getParticipantsList(namedRange), self.getPaymentAmount(namedRange))
         actualParticipants = []
         activeIndexes = set()
 
+        paymentNew = []
+        for new in newParticipants:
+            paymentNew.append(['' for i in range(3)])
+        newParticipants = add.concatList(newParticipants, paymentNew)
+
         # связка хохяин - индекс
         #oldParticipantsNoItems = {part[1]: oldParticipants.index(part) for part in oldParticipants}
-        actualParticipantsNoItems = {part[1]: actualParticipants.index(part) for part in actualParticipants}
+        actualParticipantsNoItems = {part[0][1]: actualParticipants.index(part) for part in actualParticipants}
 
         for new in newParticipants:
 
-            newItems = new[0].split(', ')
+            newItems = new[0][0].split(', ')
 
             for i in range(len(oldParticipants)):
 
-               oldItems = oldParticipants[i][0].split(', ')
+               oldItems = oldParticipants[i][0][0].split(', ')
 
                for newItem in newItems:
                   if newItem in oldItems:
 
-                       if len(oldParticipants[i][0]) > 1:
-
+                       if len(oldParticipants[i][0][0]) > 1:
                             oldItems.remove(newItem)
-                            oldParticipants[i][0] = self.makeItemString(oldItems)
+                            oldParticipants[i][0][0] = self.makeItemString(oldItems)
 
-                            if oldParticipants[i][1] in actualParticipantsNoItems.keys():
+                            if oldParticipants[i][0][1] in actualParticipantsNoItems.keys():
+                               index = actualParticipantsNoItems[oldParticipants[i][0][1]]
+                               actualParticipants[index][0][0] = oldParticipants[i][0][0]
 
-                               index = actualParticipantsNoItems[oldParticipants[i][1]]
-                               actualParticipants[index][0] = oldParticipants[i][0]
                             else:
-
                                 actualParticipants.append(oldParticipants[i])
+
                        activeIndexes.add(i)
 
             # связка хохяин - индекс
-            oldParticipantsNoItems = {part[1]: oldParticipants.index(part) for part in oldParticipants}
-            actualParticipantsNoItems = {part[1]: actualParticipants.index(part) for part in actualParticipants}
+            oldParticipantsNoItems = {part[0][1]: oldParticipants.index(part) for part in oldParticipants}
+            actualParticipantsNoItems = {part[0][1]: actualParticipants.index(part) for part in actualParticipants}
 
             # заполняем данными человека, которому уступили
-            if new[1] in oldParticipantsNoItems.keys():
-                index = oldParticipantsNoItems[new[1]]
-                itemList = oldParticipants[index][0].split(', ')
+
+            if new[0][1] in oldParticipantsNoItems.keys():
+                index = oldParticipantsNoItems[new[0][1]]
+                itemList = oldParticipants[index][0][0].split(', ')
                 itemList.extend(newItems)
                 activeIndexes.add(index)
             else:
                 itemList = newItems
 
 
-            if new[1] in actualParticipantsNoItems.keys():
-                index = actualParticipantsNoItems[new[1]]
-                actualParticipants[index][0] = self.makeItemString(itemList)
+            if new[0][1] in actualParticipantsNoItems.keys():
+                index = actualParticipantsNoItems[new[0][1]]
+                actualParticipants[index][0][0] = self.makeItemString(itemList)
             else:
-                actualParticipants.append([self.makeItemString(itemList), new[1]])
+                actualParticipants.append([[self.makeItemString(itemList), new[0][1]], ['' for i in range(3)]])
 
         # позиции тех, у которых ничего неизменилось
         inactiveIndexes = set([i for i in range(len(oldParticipants))]) - activeIndexes
@@ -284,17 +338,24 @@ class GoogleTabs:
         # зачистка от пустых позиций
         act = actualParticipants.copy()
         for i in range(len(actualParticipants)):
-            if len(actualParticipants[i][0]) == 0:
+            if len(actualParticipants[i][0][0]) == 0:
                 act.remove(actualParticipants[i])
         actualParticipants = act
 
-        actualParticipants.sort(key = lambda x: x[0].find(',') > 0 and int(x[0][0:x[0].find(',')]) or int(x[0][0:len(x[0])]))
+        actualParticipants.sort(key=lambda x: x[0][0].find(',') > 0 and int(x[0][0][0:x[0][0].find(',')]) or int(x[0][0][0:len(x[0][0])]))
+
+        paymentAmount = [x[1] for x in actualParticipants]
+        actualParticipants = [x[0] for x in actualParticipants]
 
         request = { "participants": len(actualParticipants),
                     "participantList": actualParticipants
         }
 
-        self.updateTable(namedRange, request, self.getTopicUrl(namedRange))
+        additionalInfo = { "payment": paymentAmount
+
+        }
+
+        self.updateTable(namedRange, request, additionalInfo["payment"])
 
         paymentInfo = self.getPaymentStatus(namedRange)
 

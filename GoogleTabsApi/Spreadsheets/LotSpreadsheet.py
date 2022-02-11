@@ -444,7 +444,7 @@ class Lots():
     return itemString[:-2]
 
 
- def updateBaseValues(self, collectNamedRange, participantsInfo, topicUrl):
+ def updateBaseValues(self, collectNamedRange, participantsInfo, topicUrl:str):
      '''
      Обновляет значения ячеек: позиции, участники
 
@@ -485,6 +485,55 @@ class Lots():
      ran = sheetTitle + "!{1}{0}".format(self.startLotRow+2, endLetter)
      data.append(ce.insertValue(spId, ran, topicUrl))
 
+
+     body["data"] = data
+     return body
+
+ def updateBaseValues(self, collectNamedRange, participantsInfo, additionalInfo:list):
+     '''
+     Обновляет значения ячеек: позиции, участники, суммы оплат
+
+     :param collectNamedRange: именованный диапозон в формате "В1:С45" - пример
+     :param participantsInfo: список с инфой об участнике и его позициях
+     :param additionalInfo: список с инфой о суммах оплат участников
+     :return: возвращает json запрос
+     '''
+     body = {}
+     body["valueInputOption"] = "USER_ENTERED"
+
+     data = []
+
+     sheetTitle, range_ = collectNamedRange.split("!")
+     range_ = range_.split(":")
+     startLetter = range_[0][0]
+     nameCell = chr(ord(startLetter) + 1)
+     endLetter = range_[1][0]
+
+     paymentCells = [chr(ord(nameCell)+2+i) for i in range(3)]
+
+     try:
+         spId = self.spreadsheetsIds[sheetTitle[1:len(sheetTitle) - 1]][0]
+     except:
+         spId = self.spreadsheetsIds[sheetTitle][0]
+
+     for i in range(len(participantsInfo)):
+
+         ran = sheetTitle + "!{1}{0}".format(self.startParticipantRow + i, startLetter)
+
+         if isinstance(participantsInfo[i][0], str):
+             info = participantsInfo[i][0]
+         else:
+             info = self.listToString(participantsInfo[i][0])
+
+         data.append(ce.insertValue(spId, ran, info))
+         ran = ran.replace(startLetter, nameCell, 1)
+
+         data.append(ce.insertValue(spId, ran, participantsInfo[i][1]))
+
+         # сумма оплат каждого участника
+         for j in range(len(additionalInfo[i])):
+             ran = sheetTitle + "!{1}{0}".format(self.startParticipantRow + i, paymentCells[j])
+             data.append(ce.insertValue(spId, ran, additionalInfo[i][j]))
 
      body["data"] = data
      return body

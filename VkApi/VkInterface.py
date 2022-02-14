@@ -681,10 +681,11 @@ class BoardBot:
     def payment_messege(self, mes, user_list):
 
         params = {
-            'message': mes
+            'message': mes,
+            "peer_id": '-'+self.__group_id
         }
 
         for user in user_list:
 
-            params['user_id'] = re.findall('id(\d+)',self.get_num_id(user)[1])[0]
+            #params['user_id'] = re.findall('id(\d+)',self.get_num_id(user)[1])[0]
             self.vk.messages.send(**params)

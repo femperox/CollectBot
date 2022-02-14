@@ -12,3 +12,4 @@ def concatList(list1, list2):
         resultList.append([list1[i], list2[i]])
 
     return resultList
+

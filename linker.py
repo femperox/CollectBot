@@ -335,6 +335,7 @@ def createTableTopic(post_url, zen_url = '', spId=0, topicName=0, items=0, img_u
         item = zen.parcePage(zen_url)
 
     table.createTable(spId, namedRange, participants= items, image = topicInfo[1][0], item = item)
+
     table.updateTable(namedRange, transformToTableFormat(participantsList), topicInfo[0])
 
 def ShipmentToRussiaEvent(toSpId, collectList, indList):
@@ -392,12 +393,13 @@ def changePositions(userList, topic_name = "Лоты и индивидуалки
 
         newParticipants = transformToTableFormat([yst[1]])
         try:
-            actualParticipants, paymentInfo = table.changePositions('D'+lot, newParticipants["participantList"])
+            actualParticipants, paymentInfo = table.changePositions('D'+lot, newParticipants["participantList"], yst[2])
         except:
-            actualParticipants, paymentInfo = table.changePositions('L'+lot, newParticipants["participantList"])
+            actualParticipants, paymentInfo = table.changePositions('L'+lot, newParticipants["participantList"], yst[2])
 
 
         actualParticipants = tableToTopic(actualParticipants, paymentInfo)
+
 
         what_to_find = {
             "topic_name": topic_name,
@@ -426,7 +428,7 @@ def console():
 
         lists = [ table.sp.spreadsheetsIds['Лерины лоты'][0],
                   table.sp.spreadsheetsIds['Дашины лоты'][0],
-                  table.sp.spreadsheetsIds['Дашины индивидуалки '][0],
+                  table.sp.spreadsheetsIds['Дашины индивидуалки'][0],
                   table.sp.spreadsheetsIds['ТестЛист'][0]
                 ]
 
@@ -526,8 +528,10 @@ def console():
 
               lot, items = input('лот - уступка : '.format(i)).split(' - ')
               #items = items.split(', ')
+              payed = input('Позиции оплачены? y/n: ')
+              payed = 0 if payed.lower() != 'y' else 1
 
-              user_list.append([lot, [items, url]])
+              user_list.append([lot, [items, url], payed])
 
           changePositions(user_list)
       elif choise == 7:
@@ -569,7 +573,7 @@ def paymentMessage():
 
     mes = 'это тестовое сообщение я просто тещу авторассылку'
 
-    userList = ['https://vk.com/rimebright', 'https://vk.com/iwi11forgetmydreams']
+    userList = ['https://vk.com/rimebright']
 
     vk.payment_messege(mes, userList)
 
@@ -581,13 +585,4 @@ if __name__ == '__main__':
     vk = vki.BoardBot()
 
     console()
-
-    #user_list = [["1", "https://vk.com/id146155443"]]
-    #table.changePositions('DCollect9000', user_list)
-    what_to_find = { "topic_name" : "Лоты и индивидуалки", "type": "Коллективка" , "number": 234 }
-    vk.edit_status_comment(what_to_find, status='На складе', payment=table.getPaymentStatus('DCollect234'))
-
-    #date = datetime(2021,12,1).date()
-    #vk.delete_photos("Ваши хотелки", date)
-
 

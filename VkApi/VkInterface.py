@@ -592,6 +592,7 @@ class BoardBot:
             else:
                 participants_start_part = re.search('\n\n\d', old_text).span()[1] - 1
                 participants_end_part = re.search('\n\nПоедет', old_text).span()[0] + 1
+                text = old_text
 
             text = text[:participants_start_part] + payment + text[participants_end_part:]
 
@@ -603,8 +604,10 @@ class BoardBot:
             'message': text
         }
 
-        self.vk.board.editComment(**params_edit)
-
+        try:
+            self.vk.board.editComment(**params_edit)
+        except:
+            return -1
 
     def _get_topic_by_name(self, topic_name: str) -> int:
         """

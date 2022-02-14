@@ -476,7 +476,7 @@ class Lots():
 
     return itemString[:-2]
 
-
+ @dispatch(str, list, str)
  def updateBaseValues(self, collectNamedRange, participantsInfo, topicUrl:str):
      '''
      Обновляет значения ячеек: позиции, участники
@@ -522,6 +522,7 @@ class Lots():
      body["data"] = data
      return body
 
+ @dispatch(str, list, list)
  def updateBaseValues(self, collectNamedRange, participantsInfo, additionalInfo:list):
      '''
      Обновляет значения ячеек: позиции, участники, суммы оплат

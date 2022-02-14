@@ -260,7 +260,7 @@ class GoogleTabs:
         return topicUrl
 
 
-    def changePositions(self, namedRange, newParticipants):
+    def changePositions(self, namedRange, newParticipants, payed):
         '''
         Производит автоматическую перепись позиций для участников лота (новые участники включаются)
         :param spId: айди листа в таблице
@@ -274,7 +274,11 @@ class GoogleTabs:
         # participant = [ ['позиции через запятую', 'Гиперссылка на участника'], [ [сумма, оплат, участника], [цвета, каждой, колонки] ]
         # работа в основном по participant[0]. Остальное дополнительная информация
 
-        newParticipantColor = c.light_red
+        colors = [c.light_red, c.light_green]
+
+        pprint(newParticipants)
+
+        newParticipantColor = colors[payed]
         newPayment = [newParticipantColor for i in range(4)]
 
         oldParticipants = add.concatList(self.getParticipantsList(namedRange), self.getPaymentAmount(namedRange))
@@ -306,7 +310,7 @@ class GoogleTabs:
                for newItem in newItems:
                   if newItem in oldItems:
 
-                       if len(oldParticipants[i][0][0]) > 1:
+                       if len(oldParticipants[i][0][0]) >= 1:
                             oldItems.remove(newItem)
                             oldParticipants[i][0][0] = self.makeItemString(oldItems)
 

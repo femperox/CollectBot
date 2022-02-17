@@ -523,7 +523,6 @@ class BoardBot:
 
                     number = comment['text'].split('\n')[0].split(' ')[1]
                     number = int(re.findall("(\d+)", number)[0])
-
                     if number == what_to_find["number"]:
                         return comment
                         break
@@ -542,11 +541,14 @@ class BoardBot:
         old_text = comment['text']
 
         try:
-            start_part = re.search('Состояние: (.+)\n\n', old_text).span()[1]
+            start_part = re.search('\n\n\d', old_text).span()[1] - 1
         except:
             # Состояние: Едет в РФ \n tracks \n\n позиции
-            start_part = re.search('\n\n\d', old_text).span()[1] - 1
-        end_part = re.search('\n\nПоедет', old_text).span()[0]
+            start_part = re.search('\n \n\d', old_text).span()[1] - 1
+        try:
+            end_part = re.search('\n\nПоедет', old_text).span()[0]
+        except:
+            end_part = re.search('\n \nПоедет', old_text).span()[0]
 
         text = old_text[:start_part] + text + old_text[end_part:]
 

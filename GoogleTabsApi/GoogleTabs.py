@@ -53,6 +53,33 @@ class GoogleTabs:
         spreadsheet = self.__service.spreadsheets().get(spreadsheetId = self.__spreadsheet_id, includeGridData = includeGridData).execute()
         return spreadsheet.get('sheets')
 
+    def getRowData(self, namedRange, typeCalling = 0):
+        '''
+        Подробная информация о строках заданного диапозона
+
+        :param namedRange:
+        :param typeCalling: тип вызова. 0 - инфа без участников. 1 - инфа об участниках
+        :return:
+        '''
+
+        sheetTitle, range_ = self.getJsonNamedRange(namedRange).split('!')
+
+        start, end = range_.split(':')
+
+        if typeCalling == 0:
+            start = chr(ord(start[0]) + 3) + str(int(start[1:]) + 14)
+            end = chr(ord(end[0]) - 3) + str(int(end[1:]) - 1)
+        else:
+            end = chr(ord(start[0]) + 1) + str(int(end[1:]) - 1)
+            start = chr(ord(start[0]) + 1) + str(int(start[1:]) + 14)
+
+        range_ = '{0}!{1}:{2}'.format(sheetTitle, start, end)
+
+        spreadsheet = self.__service.spreadsheets().get(spreadsheetId=self.__spreadsheet_id, ranges=range_,
+                                                        includeGridData=True).execute()
+
+        return spreadsheet["sheets"][0]['data'][0]["rowData"]
+
     def getPaymentStatus(self, namedRange):
         '''
         Информация о статусе оплат каждого участника
@@ -61,20 +88,7 @@ class GoogleTabs:
         :return: список строк, состоящих из '+'
         '''
 
-        sheetTitle, range_ = self.getJsonNamedRange(namedRange).split('!')
-
-        start, end = range_.split(':')
-
-        start = chr(ord(start[0])+3) + str(int(start[1:])+14)
-        end = chr(ord(end[0])-3) + str(int(end[1:])-1)
-
-        range_ = '{0}!{1}:{2}'.format(sheetTitle, start, end)
-
-
-        spreadsheet = self.__service.spreadsheets().get(spreadsheetId=self.__spreadsheet_id, ranges = range_,
-                                                        includeGridData=True).execute()
-
-        info = spreadsheet["sheets"][0]['data'][0]["rowData"]
+        info = self.getRowData(namedRange)
         paymentInfo = []
 
         for row in info:
@@ -87,6 +101,27 @@ class GoogleTabs:
 
         return paymentInfo
 
+    def getOldUrls(self, namedRange):
+        '''
+        Информация о старом типе ссылок в таблице лота
+
+        :param namedRange:
+        :return:
+        '''
+
+        info = self.getRowData(namedRange, typeCalling=1)
+
+        oldUrls = []
+
+        for row in info:
+            for column in row['values']:
+                try:
+                    oldUrls.append([column['formattedValue'], column['hyperlink']])
+                except:
+                    oldUrls.append([])
+
+        return oldUrls
+
     def getPaymentAmount(self, namedRange):
         '''
         Информация о значениях оплат
@@ -95,19 +130,7 @@ class GoogleTabs:
         :return: список сумм к оплате за каждую категорию
         '''
 
-        sheetTitle, range_ = self.getJsonNamedRange(namedRange).split('!')
-
-        start, end = range_.split(':')
-
-        start = chr(ord(start[0]) + 3) + str(int(start[1:]) + 14)
-        end = chr(ord(end[0]) - 2) + str(int(end[1:]) - 1)
-
-        range_ = '{0}!{1}:{2}'.format(sheetTitle, start, end)
-
-        spreadsheet = self.__service.spreadsheets().get(spreadsheetId=self.__spreadsheet_id, ranges=range_,
-                                                        includeGridData=True).execute()
-
-        info = spreadsheet["sheets"][0]['data'][0]["rowData"]
+        info = self.getRowData(namedRange)
         paymentInfo = []
 
         for row in info:
@@ -148,6 +171,12 @@ class GoogleTabs:
         return imgUrl
 
     def getParticipantsList(self, namedRange):
+       '''
+       Информация об участниках и их позициях
+
+       :param namedRange:
+       :return:
+       '''
 
        info_urls = self.getJsonNamedRange(namedRange, typeCalling = 1)
        info_items = self.getJsonNamedRange(namedRange, typeCalling = 1, valueRenderOption= "FORMATTED_VALUE")
@@ -379,13 +408,19 @@ class GoogleTabs:
         return actualParticipants, paymentInfo
 
 
+    def replaceOldUrls(self, namedRange):
+        '''
+        Автозамена старого формата ссылок на новый
+        :param namedRange:
+        :return:
+        '''
 
-class TestingGoogleTabs(GoogleTabs):
+        urlList = self.getOldUrls(namedRange)
+        range_ = self.getJsonNamedRange(namedRange)
 
-    def testingCreation(self, spId, namedRange, lots = 1):
+        self.__service.spreadsheets().values().batchUpdate(spreadsheetId=self.__spreadsheet_id,
+                                                           body=self.sp.replaceOldUrls(range_, urlList)).execute()
 
-        for i in range(lots):
-            self.createTable(spId, namedRange + str(i+1), i+1)
 
 
 

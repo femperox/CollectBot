@@ -572,6 +572,42 @@ class Lots():
      body["data"] = data
      return body
 
+ def replaceOldUrls(self, collectNamedRange, urlList):
+     '''
+     Обновляет ссылки на участников
+
+     :param collectNamedRange:
+     :param urlList:
+     :return:
+     '''
+
+     body = {}
+     body["valueInputOption"] = "USER_ENTERED"
+
+     data = []
+
+     sheetTitle, range_ = collectNamedRange.split("!")
+     range_ = range_.split(":")
+     startParticipantRow = int(range_[0][1:]) + 14
+     nameCell = chr(ord(range_[0][0]) + 1)
+
+     try:
+         spId = self.spreadsheetsIds[sheetTitle[1:len(sheetTitle) - 1]][0]
+     except:
+         spId = self.spreadsheetsIds[sheetTitle][0]
+
+     for i in range(len(urlList)):
+
+         if len(urlList[i]) == 0:
+             continue
+         ran = sheetTitle + "!{1}{0}".format(startParticipantRow + i, nameCell)
+         info = f'=HYPERLINK("{urlList[i][1]}"; "{urlList[i][0]}")'
+         data.append(ce.insertValue(spId, ran, info))
+
+     body["data"] = data
+     return body
+
+
 
 
 

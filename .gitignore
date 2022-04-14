@@ -1,5 +1,6 @@
-*tmp/
+src/tmp/
 *.json
 *__pycache__/
 *.ui
-/VkApi/test.py
+.idea
+/src/VkApi/test.py

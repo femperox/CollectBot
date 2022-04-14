@@ -1,4 +1,4 @@
-from GoogleTabsApi.Styles.Colors import Colors as c
+from src.GoogleTabsApi.Styles.Colors import Colors as c
 
 class Borders:
 

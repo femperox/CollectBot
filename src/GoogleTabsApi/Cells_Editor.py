@@ -1,4 +1,4 @@
-from GoogleTabsApi.Styles.Borders import Borders as b
+from src.GoogleTabsApi.Styles.Borders import Borders as b
 
 
 def toRangeType(spId, range):

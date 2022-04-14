@@ -3,18 +3,17 @@ import httplib2
 from googleapiclient import discovery
 from oauth2client.service_account import ServiceAccountCredentials
 import re
-from operator import itemgetter
 
-import GoogleTabsApi.Cells_Editor as ce
-from GoogleTabsApi.Styles.Colors import Colors as c
-import GoogleTabsApi.Spreadsheets.LotSpreadsheet as ls
-import misc.Additionals as add
+import src.GoogleTabsApi.Cells_Editor as ce
+from src.GoogleTabsApi.Styles.Colors import Colors as c
+import src.GoogleTabsApi.Spreadsheets.LotSpreadsheet as ls
+import src.misc.Additionals as add
 
 class GoogleTabs:
 
     def __init__(self):
         # Service-объект, для работы с Google-таблицами
-        CREDENTIALS_FILE = r'./GoogleTabsApi/creds.json'  # имя файла с закрытым ключом
+        CREDENTIALS_FILE = r'./src/GoogleTabsApi/creds.json'  # имя файла с закрытым ключом
         credentials = ServiceAccountCredentials.from_json_keyfile_name(CREDENTIALS_FILE,
                                                                        ['https://www.googleapis.com/auth/spreadsheets',
                                                                         'https://www.googleapis.com/auth/drive'])

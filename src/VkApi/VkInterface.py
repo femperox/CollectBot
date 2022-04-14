@@ -12,7 +12,7 @@ from datetime import datetime
 class BoardBot:
 
     def __init__(self) -> None:
-        tmp_dict = json.load(open('./VkApi/privates.json', encoding='utf-8'))
+        tmp_dict = json.load(open('./src/VkApi/privates.json', encoding='utf-8'))
         self.__group_id = tmp_dict['group_id']
         auth_data = self._login_pass_get(tmp_dict)
         if auth_data[0] and auth_data[1]:
@@ -28,8 +28,8 @@ class BoardBot:
         self.lang = 100
     
     def _init_tmp_dir(self) -> None:
-        if not os.path.isdir('tmp'):
-            os.mkdir('tmp')
+        if not os.path.isdir('./src/VkApi/tmp'):
+            os.mkdir('./src/VkApi/tmp')
 
     def _two_factor_auth(self):
         key = input("Enter authentication code: ")
@@ -52,7 +52,7 @@ class BoardBot:
                 for _ in range(size):
                     key += chr(random.randint(0, 10000))
                 privates.setdefault('secret_key', key)
-                json.dump(privates, open('./VkApi/privates.json', 'w'))
+                json.dump(privates, open('./src/VkApi/privates.json', 'w'))
             return privates.get('secret_key', '')
         except:
             print_exc()
@@ -111,7 +111,7 @@ class BoardBot:
                 privates.setdefault('login', login)
                 privates.setdefault('password', password)
 
-                json.dump(privates, open('./VkApi/privates.json', 'w'))
+                json.dump(privates, open('./src/VkApi/privates.json', 'w'))
                 return new_login, new_pass
             new_login = self._encode_decode_str(key, login, encode=False)
             new_pass = self._encode_decode_str(key, password, encode=False)
@@ -143,7 +143,7 @@ class BoardBot:
             if extention != '':
                 filename = 'new_image' + extention
                 response = requests.get(url)
-                image = open('./VkApi/tmp/' + filename, 'wb')
+                image = open('./src/VkApi/tmp/' + filename, 'wb')
                 image.write(response.content)
                 image.close()
             return filename
@@ -167,9 +167,9 @@ class BoardBot:
             try:
                 vk_response = requests.post(
                     vk_url, 
-                    files={'photo': open('./VkApi/tmp/{}'.format(image_name), 'rb')}
+                    files={'photo': open('./src/VkApi/tmp/{}'.format(image_name), 'rb')}
                 ).json()
-                os.remove('./VkApi/tmp/' + image_name)
+                os.remove('./src/VkApi/tmp/' + image_name)
                 if vk_response['photo']:
                     vk_image = self.vk.photos.saveWallPhoto(
                         group_id=self.__group_id,

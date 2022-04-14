@@ -1,12 +1,12 @@
-import GoogleTabsApi.Cells_Editor as ce
-from GoogleTabsApi.Styles.Borders import Borders as b
-from GoogleTabsApi.Styles.Colors import Colors as c
+import src.GoogleTabsApi.Cells_Editor as ce
+from src.GoogleTabsApi.Styles.Borders import Borders as b
+from src.GoogleTabsApi.Styles.Colors import Colors as c
 import re
 from pprint import pprint
 from datetime import datetime
 from dateutil.relativedelta import *
 from multipledispatch import dispatch
-import time
+
 
 class Lots():
 
@@ -335,10 +335,10 @@ class Lots():
      request.append(ce.setCellBorder(newSpId, "{0}{1}:{2}{1}".format(chr(ord(endLetter)-1), newEnd, endLetter), all_same= False, bstyleList=[b.no_border, b.plain_black, b.plain_black, b.plain_black]))
 
      # Сопостовление индексов для нового места
-     if newSpId == self.spreadsheetsIds['Дашины лоты (Едет в РФ)'][0]:
-         convertedRange = int(convertedRange[1][1:]) - int(convertedRange[0][1:]) + int(newRange[1:])
-         newRange += ':{0}{1}'.format(endLetter, convertedRange)
-         request.append(ce.addNamedRange(newSpId, newRange, collectId))
+     #if newSpId == self.spreadsheetsIds['Дашины лоты (Едет в РФ)'][0]:
+	 #convertedRange = int(convertedRange[1][1:]) - int(convertedRange[0][1:]) + int(newRange[1:])
+     #newRange += ':{0}{1}'.format(endLetter, convertedRange)
+     #request.append(ce.addNamedRange(newSpId, newRange, collectId))
 
 
      return request
@@ -361,7 +361,7 @@ class Lots():
      print(namedRange)
 
      if spId == self.spreadsheetsIds['Дашины лоты (Архив)'][0]:
-        takeDate = ( now+relativedelta(months=+1)).strftime("%d.%m.%Y")
+        takeDate = ( now+relativedelta(weeks=+1)).strftime("%d.%m.%Y")
         info = '{0} - {1}'.format(gotDate, takeDate)
         label = 'Получено - Забрать:'
      else:

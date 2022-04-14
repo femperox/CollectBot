@@ -54,6 +54,3 @@ def getTracking(barcode):
 
     return parcel
 
-
-barcode = '80111471834158' #баркод
-getTracking(barcode)

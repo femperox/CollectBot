@@ -1,6 +1,9 @@
 from suds.client import Client
 from pprint import pprint
 import json
+import sqlalchemy
+from sqlalchemy import func
+from sqlalchemy.orm import Session
 
 def getTracking(barcode):
     '''
@@ -49,8 +52,41 @@ def getTracking(barcode):
     parcel['operationIndex'] = current_stat['AddressParameters']['OperationAddress']['Index']
     parcel['operationDate'] = current_stat['OperationParameters']['OperDate']
     parcel['operationType'] = current_stat['OperationParameters']['OperType']['Name']
-    parcel['operationAttr'] = current_stat['OperationParameters']['OperAttr']['Name']
-    parcel['mass'] = current_stat['ItemParameters']['Mass']
+
+    try:
+        parcel['operationAttr'] = current_stat['OperationParameters']['OperAttr']['Name']
+    except:
+        parcel['operationAttr'] = 'none'
+
+    try:
+        parcel['mass'] = current_stat['ItemParameters']['Mass']
+    except:
+        parcel['mass'] = 0
 
     return parcel
+
+def insertDB(barcode, vk_id):
+
+    tmp_dict = json.load(open('privates.json', encoding='utf-8'))
+    login = tmp_dict['bd_login']
+    psw = tmp_dict['bd_psw']
+    host = tmp_dict['bd_host']
+
+    info = getTracking(barcode)
+    info['rcpnVkId'] = vk_id
+
+    engine = sqlalchemy.create_engine(f"postgresql+psycopg2://{login}:{psw}@{host}/Pochta")
+    #engine.connect()
+    session = Session(bind=engine)
+
+
+    session.execute("Call ParcelInsertUpdate( '{0}', '{1}', '{2}', {3}, {4}, '{5}', '{6}', '{7}', {8}, '{9}', {10})".format
+                  ( info['barcode'], info['sndr'], info['rcpn'],
+                     info['destinationIndex'], info['operationIndex'],
+                     info['operationDate'], info['operationType'], info['operationAttr'],
+                     info['mass'], info['rcpnVkId'], False
+                   ))
+    session.commit()
+
+
 

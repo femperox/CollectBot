@@ -150,7 +150,7 @@ class BoardBot:
         except:
             return ''
     
-    def _vk_image_upload(self, image_name: str) -> dict:
+    def _vk_image_upload(self, image_name: str, tag = '#tag') -> dict:
         """Загружает локальное изображение на сервера Вконтакте
 
         Args:
@@ -175,7 +175,8 @@ class BoardBot:
                         group_id=self.__group_id,
                         photo=vk_response['photo'],
                         server=vk_response['server'],
-                        hash=vk_response['hash']
+                        hash=vk_response['hash'],
+                        caption = tag
                     )
                     return vk_image[0]
             except:
@@ -183,7 +184,7 @@ class BoardBot:
                 return {}
         return {}
 
-    def _form_images_request_signature(self, image_urls: list) -> str:
+    def _form_images_request_signature(self, image_urls: list, tag='') -> str:
         """Получает строку для опубликования медиа-вложений
 
         Args:
@@ -199,7 +200,7 @@ class BoardBot:
             for i in range(urls_count):
                 new_image = self._local_image_upload(image_urls[i])
                 if new_image != '':
-                    vk_image = self._vk_image_upload(new_image)
+                    vk_image = self._vk_image_upload(new_image, tag)
                     if vk_image != {}:
                         result += 'photo{}_{}'.format(vk_image['owner_id'], vk_image['id']) + ('' if i == urls_count - 1 else ',')
                         result_urls.append(vk_image['sizes'][-1]['url'])
@@ -308,7 +309,40 @@ class BoardBot:
         except:
             print_exc()
             return '', []
-    
+
+    def post_publication(self,message: str, img_urls=[], from_group=1, signed = 1, tag = '#tag'):
+        """Позволяет создать запись на стене сообщества.
+
+                Args:
+                    message (str): Текст комментария
+                    from_group (int, optional): От имени кого будет опубликована запись. 1 - от сообщества, 0 - от имени пользователя. По умолч. = 1
+                    img_urls (list, optional): Список url картинок, которые необходимо прикрепить. По умолчанию = [].
+                    tag (str, optional): Теги, проставляемые в описании изображения
+
+                Returns:
+                    tuple: Возвращает url созданного / изменённого комментария + список url прикреплённых к нему изображений
+                """
+        try:
+            params = {
+                'owner_id': f'-{self.__group_id}',
+                'message': message,
+                'from_group': from_group,
+                'guid': random.randint(0, 1000000000),
+                'signed': signed,
+            }
+            attachments = self._form_images_request_signature(img_urls, tag)
+            if attachments != ('', []):
+                params.setdefault('attachments', attachments[0])
+
+            post_id = self.vk.wall.post(**params)
+
+            res_url = 'https://vk.com/wall-{}_{}'.format(self.__group_id, post_id['post_id'])
+            return res_url, attachments[1]
+        except:
+            print_exc()
+            return '', []
+
+
     def _append_unique_user_id(self, comm: dict, admin_ids: set, user_ids) -> list:
         if comm['from_id'] > 0 and comm['from_id'] not in admin_ids:
             new_id = comm['from_id']

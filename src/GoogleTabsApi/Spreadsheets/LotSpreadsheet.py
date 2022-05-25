@@ -112,13 +112,13 @@ class Lots():
         request.append(ce.updateSheetProperties(spId, addingRows = 500))
 
     # стили ячеек
-    request.append(ce.repeatCells(spId, "A{0}:G{1}".format(self.startLotRow, self.summaryRow), c.white))
-    request.append(ce.repeatCells(spId, "H{0}:H{1}".format(self.startLotRow, self.startLotRow + 2), c.white, hali = "RIGHT"))
-    request.append(ce.repeatCells(spId, "I{0}:I{1}".format(self.startLotRow, self.startLotRow + 2), c.white))
+    request.append(ce.repeatCells(spId, "A{0}:H{1}".format(self.startLotRow, self.summaryRow), c.white))
+    request.append(ce.repeatCells(spId, "I{0}:I{1}".format(self.startLotRow, self.startLotRow + 4), c.white, hali = "RIGHT"))
+    request.append(ce.repeatCells(spId, "J{0}:J{1}".format(self.startLotRow, self.startLotRow + 4), c.white))
     request.append(ce.repeatCells(spId, "C{0}:C{0}".format(self.startLotRow), c.light_purple))
     request.append(ce.repeatCells(spId, "A{0}:B{0}".format(self.startLotRow), c.light_purple, hali = "RIGHT"))
     request.append(ce.repeatCells(spId, "A{0}:C{0}".format(self.summaryRow), c.light_purple, hali = "RIGHT"))
-    request.append(ce.repeatCells(spId, "D{0}:F{0}".format(self.summaryRow), c.light_purple))
+    request.append(ce.repeatCells(spId, "D{0}:G{0}".format(self.summaryRow), c.light_purple))
 
     # объдинение ячеек
     request.append(ce.mergeCells(spId, "A{0}:B{0}".format(self.startLotRow)))
@@ -126,6 +126,7 @@ class Lots():
     request.append(ce.mergeCells(spId, "E{0}:E{1}".format(self.startLotRow, self.startLotRow+13)))
     request.append(ce.mergeCells(spId, "F{0}:F{1}".format(self.startLotRow, self.startLotRow+13)))
     request.append(ce.mergeCells(spId, "G{0}:G{1}".format(self.startLotRow, self.startLotRow+13)))
+    request.append(ce.mergeCells(spId, "H{0}:H{1}".format(self.startLotRow, self.startLotRow + 13)))
     request.append(ce.mergeCells(spId, "A{0}:C{1}".format(self.startLotRow+1, self.startLotRow+13)))  # место для картинки
     request.append(ce.mergeCells(spId, "A{0}:C{0}".format(self.summaryRow))) # для "суммарно"
 
@@ -133,14 +134,14 @@ class Lots():
     for i in range(participants):
         request.append(ce.mergeCells(spId, "B{0}:C{0}".format(self.startParticipantRow+i)))
         request.append(ce.repeatCells(spId, "D{0}:E{0}".format(self.startParticipantRow+i), c.light_red))
-        request.append(ce.repeatCells(spId, "G{0}:G{0}".format(self.startParticipantRow + i), c.light_red))
+        request.append(ce.repeatCells(spId, "H{0}:H{0}".format(self.startParticipantRow + i), c.light_red))
 
     # границы ячеек
-    request.append(ce.setCellBorder(spId, "A{0}:G{1}".format(self.startLotRow, self.summaryRow), bstyleList=b.plain_black))
-    request.append(ce.setCellBorder(spId, "H{0}:I{1}".format(self.startLotRow, self.startLotRow+2), bstyleList=b.plain_black))
-    request.append(ce.setCellBorder(spId, "H{0}:I{1}".format(self.startLotRow+3, self.summaryRow), only_outer= True, bstyleList=b.plain_black))
+    request.append(ce.setCellBorder(spId, "A{0}:H{1}".format(self.startLotRow, self.summaryRow), bstyleList=b.plain_black))
+    request.append(ce.setCellBorder(spId, "I{0}:J{1}".format(self.startLotRow, self.startLotRow+4), bstyleList=b.plain_black))
+    request.append(ce.setCellBorder(spId, "I{0}:J{1}".format(self.startLotRow+5, self.summaryRow), only_outer= True, bstyleList=b.plain_black))
 
-    request.append(ce.addNamedRange(spId, "A{0}:I{1}".format(self.startLotRow, self.summaryRow), rangeName))
+    request.append(ce.addNamedRange(spId, "A{0}:J{1}".format(self.startLotRow, self.summaryRow), rangeName))
 
     return request
 
@@ -184,9 +185,9 @@ class Lots():
      ran = sheetTitle +"!A{0}:B{0}".format(self.startLotRow)
      data.append(ce.insertValue(spId, ran, "{1} №{0}   Трек:".format(collectNum, collectType)))
 
-     words = ["Позиция (с налогом)", "Доставка по Япе", "Доставка до РФ", "Задолжность",
-              "Вес лота:", "Беседа лота:", "Лот в обсуждении:", "СУММАРНО"]
-     mergedWordsAm = 4
+     words = ["Позиция (с налогом)", "Доставка по Япе", "Доставка до Владивостока", "Доставка до коллективщика", "Задолжность",
+              "Вес лота:", "Беседа лота:", "Лот в обсуждении:", "Ссылка на сайте:", "Номер у посреда:","СУММАРНО"]
+     mergedWordsAm = 5
      unmergedWordsAm = len(words) - mergedWordsAm
 
      # Имена шапок по оплатам и задание формулы суммы
@@ -196,15 +197,15 @@ class Lots():
          data.append(ce.insertValue(spId, ran, words[i]))
 
          ran = sheetTitle + "!{0}{1}".format(letter, self.summaryRow)
-         if letter == 'g':
-             formula = "=SUM(D{0}:F{0})".format(self.summaryRow)
+         if letter == 'h':
+             formula = "=SUM(D{0}:G{0})".format(self.summaryRow)
          else:
              formula = "=SUM({0}{1}:{0}{2})".format(letter, self.startParticipantRow, self.summaryRow-1)
          data.append(ce.insertValue(spId, ran, formula))
 
      # Имена шапок инфы о лоте
      for i in range(unmergedWordsAm-1):
-         ran = sheetTitle + "!H{0}".format(self.startLotRow+i)
+         ran = sheetTitle + "!I{0}".format(self.startLotRow+i)
          data.append(ce.insertValue(spId, ran, words[mergedWordsAm+i]))
 
      # Нумерация участников и задание формулы задолжности
@@ -212,7 +213,7 @@ class Lots():
          ran = sheetTitle + "!A{0}".format(self.startParticipantRow+i)
          data.append(ce.insertValue(spId, ran, i+1))
 
-         ran = ran.replace('A', 'G', 1)
+         ran = ran.replace('A', 'H', 1)
          data.append(ce.insertValue(spId, ran, "=D{0}+E{0}".format(self.startParticipantRow+i)))
 
      # Имена шапки "суммарно"
@@ -224,41 +225,47 @@ class Lots():
      image = '=IMAGE("{0}")'.format(image)
      data.append(ce.insertValue(spId, ran, image))
 
-     # Для расчётов
-     form = "!I{0}"
-     ran = sheetTitle + form.format(self.startLotRow+3)
-     data.append(ce.insertValue(spId, ran, 227))
+     # информация о сайте
+     url = f'=HYPERLINK("{item["page"]}"; "{item["siteName"]}")'
+     ran = sheetTitle + "!J{0}".format(self.startLotRow+3)
+     data.append(ce.insertValue(spId, ran, url))
 
-     ran = sheetTitle + form.format(self.startLotRow+4)
-     formula = "=I{0}/300".format(self.startLotRow+3)
+     # Для расчётов
+     form = "!J{0}"
+     ran = sheetTitle + form.format(self.startLotRow+5)
+     data.append(ce.insertValue(spId, ran, 225))
+
+     ran = sheetTitle + form.format(self.startLotRow+6)
+     formula = "=J{0}/300".format(self.startLotRow+5)
      data.append(ce.insertValue(spId, ran, formula))
 
      for i in range(2):
-         row = self.startLotRow+6+i
+         row = self.startLotRow+8+i
          ran = sheetTitle + form.format(row)
-         formula = "=CEILING(H{0}*I{1})".format(row, self.startLotRow+4)
+         formula = "=CEILING(I{0}*J{1})".format(row, self.startLotRow+6)
          data.append(ce.insertValue(spId, ran, formula))
 
-         ran = sheetTitle + "!H{0}".format(row)
+         ran = sheetTitle + "!I{0}".format(row)
          data.append(ce.insertValue(spId, ran, 0))
 
-     for i in range(ord('H'), ord('I')+1):
-         row = self.startLotRow + 8
+     for i in range(ord('I'), ord('J')+1):
+         row = self.startLotRow + 10
          ran = sheetTitle + "!{0}{1}".format(chr(i), row)
          formula = "= {0}{1} + {0}{2}".format(chr(i), row - 2, row -1)
          data.append(ce.insertValue(spId,ran,formula))
 
      if item:
-        ran = sheetTitle + "!H{0}".format(self.startLotRow+6)
-        formula = "={0} + {1} + 300".format(item['priceYen'], item['percentTax'])
+        ran = sheetTitle + "!I{0}".format(self.startLotRow+8)
+        posredTax = str(500 if item['priceYen']*0.1 >= 500 else item['priceYen']*0.1).replace('.', ',')
+        formula = "={0} + {1} + 500 + {2}".format(item['priceYen'], item['percentTax'], posredTax)
         data.append(ce.insertValue(spId, ran, formula))
 
      if participants == 1:
         ran = sheetTitle + "!D{0}".format(self.startParticipantRow)
-        formula = "=I{0}".format(self.startLotRow+6)
+        formula = "=J{0}".format(self.startLotRow+8)
         data.append(ce.insertValue(spId, ran, formula))
         ran = sheetTitle + "!E{0}".format(self.startParticipantRow)
-        formula = "=I{0}".format(self.startLotRow + 7)
+        formula = "=J{0}".format(self.startLotRow + 9)
         data.append(ce.insertValue(spId, ran, formula))
 
      return data
@@ -294,10 +301,10 @@ class Lots():
 
      if collectId.find("DCollect") == 0:
          startLetter = 'A'
-         endLetter = 'I'
+         endLetter = 'J'
      else:
-         startLetter = 'K'
-         endLetter = 'S'
+         startLetter = 'L'
+         endLetter = 'U'
 
      freeRow = self.findFreeRaw(sheetList, newSpId, collectId, typeCalling = 0)
      newRange = "{0}{1}".format(startLetter, freeRow)
@@ -334,11 +341,9 @@ class Lots():
      request.append(ce.repeatCells(newSpId, "{0}{1}:{0}{1}".format(chr(ord(endLetter)-1), newEnd), c.white_blue, hali="RIGHT"))
      request.append(ce.setCellBorder(newSpId, "{0}{1}:{2}{1}".format(chr(ord(endLetter)-1), newEnd, endLetter), all_same= False, bstyleList=[b.no_border, b.plain_black, b.plain_black, b.plain_black]))
 
-     # Сопостовление индексов для нового места
-     #if newSpId == self.spreadsheetsIds['Дашины лоты (Едет в РФ)'][0]:
-	 #convertedRange = int(convertedRange[1][1:]) - int(convertedRange[0][1:]) + int(newRange[1:])
-     #newRange += ':{0}{1}'.format(endLetter, convertedRange)
-     #request.append(ce.addNamedRange(newSpId, newRange, collectId))
+     convertedRange = int(convertedRange[1][1:]) - int(convertedRange[0][1:]) + int(newRange[1:])
+     newRange += ':{0}{1}'.format(endLetter, convertedRange)
+     request.append(ce.addNamedRange(newSpId, newRange, collectId))
 
 
      return request
@@ -361,7 +366,7 @@ class Lots():
      print(namedRange)
 
      if spId == self.spreadsheetsIds['Дашины лоты (Архив)'][0]:
-        takeDate = ( now+relativedelta(weeks=+1)).strftime("%d.%m.%Y")
+        takeDate = ( now+relativedelta(months=+1)).strftime("%d.%m.%Y")
         info = '{0} - {1}'.format(gotDate, takeDate)
         label = 'Получено - Забрать:'
      else:
@@ -517,6 +522,8 @@ class Lots():
      topicUrl = '=HYPERLINK("{0}"; "тык")'.format(topicUrl)
      ran = sheetTitle + "!{1}{0}".format(self.startLotRow+2, endLetter)
      data.append(ce.insertValue(spId, ran, topicUrl))
+
+
 
 
      body["data"] = data

@@ -129,11 +129,10 @@ def parseAmiAmiEng(url):
     item['siteName'] = 'AmiAmiEng'
     item['name'] = js['item']['gname']
 
-    pprint(item)
-
-    pass
+    return item
 
 def parseAmiAmiJp(url):
+    # доработать
 
     curl = 'https://jp-tags.mediaforge.com/js/4740/?prodID=FIGURE-140658'
 
@@ -150,7 +149,6 @@ def parseMandarake(url):
 
     ok.implicitly_wait(10)
     ok.get(url)
-    #sleep(10)
 
     for request in ok.requests:
         if request.url.find('getInfo') > 0:
@@ -167,9 +165,8 @@ def parseMandarake(url):
     item['percentTax'] = int(str(info)[pos_tax+len('"price_with_tax":'):-2]) - int(item['priceYen'])
     item['priceShipmt'] = 0
     item['page'] = url
-    #item['mainPhoto'] = 'https://img.amiami.com'+js['item']['main_image_url']
+    #item['mainPhoto'] = додумать
     item['siteName'] = 'Mandarake'
-    #item['name'] = js['item']['gname']
 
     return item
 

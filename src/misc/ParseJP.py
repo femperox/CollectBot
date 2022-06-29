@@ -8,6 +8,8 @@ import re
 from time import sleep
 from webdriver_manager.chrome import ChromeDriverManager
 import xmltodict
+from pathlib import Path
+import os
 
 def makeSoup(url):
     headers = { 'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/29.0.1547.62 Safari/537.36'
@@ -29,7 +31,7 @@ def getHeader():
     return headers
 
 
-def parceMercariPage(url):
+def parseMercariPage(url):
 
     session = requests.session()
     curl = f'https://api.mercari.jp/items/get?id={getItemID(url)}'
@@ -60,7 +62,7 @@ def parceMercariPage(url):
 
     return item
 
-def parcePayPay(url):
+def parsePayPay(url):
 
     curl = f'https://paypayfleamarket.yahoo.co.jp/api/item/v2/items/{getItemID(url)}'
 
@@ -80,7 +82,10 @@ def parcePayPay(url):
 
 def parseYahooAuctions(url):
 
-    tmp_dict = json.load(open('privates.json', encoding='utf-8'))
+    path = os.getcwd()+ '/src/misc/privates.json'
+
+    print(path)
+    tmp_dict = json.load(open(path, encoding='utf-8'))
     app_id = tmp_dict['yahoo_jp_app_id']
 
     curl = f'https://auctions.yahooapis.jp/AuctionWebService/V2/auctionItem?appid={app_id}&auctionID={getItemID(url)}#'
@@ -91,6 +96,8 @@ def parseYahooAuctions(url):
 
     item = {}
     item['priceYen'] = xml['ResultSet']['Result']['Price']
+    item['priceYen'] = item['priceYen'][:item['priceYen'].find('.')]
+    pprint(item['priceYen'])
     item['percentTax'] = float(item['priceYen']) * float(xml['ResultSet']['Result']['TaxRate'])/100
     item['priceShipmt'] = 0 # потом додумать
     item['page'] = url
@@ -98,6 +105,76 @@ def parseYahooAuctions(url):
     item['siteName'] = 'yahooAuctions'
 
     return item
+
+def parseAmiAmiEng(url):
+
+    id = getItemID(url)
+    id = id[id.find('=')+1:].replace('&page=top','')
+    print(id)
+
+    curl = f'https://api.amiami.com/api/v1.0/item?gcode={id}'#&lang=jp'
+
+    headers = getHeader()
+
+    headers['x-user-key'] = 'amiami_dev'
+    page = requests.get(curl, headers=headers)
+    js = page.json()
+
+    item = {}
+    item['priceYen'] = js['item']['price']
+    item['percentTax'] = 0
+    item['priceShipmt'] = 0
+    item['page'] = url
+    item['mainPhoto'] = 'https://img.amiami.com'+js['item']['main_image_url']
+    item['siteName'] = 'AmiAmiEng'
+    item['name'] = js['item']['gname']
+
+    pprint(item)
+
+    pass
+
+def parseAmiAmiJp(url):
+
+    curl = 'https://jp-tags.mediaforge.com/js/4740/?prodID=FIGURE-140658'
+
+    headers = getHeader()
+
+    page = requests.get(curl, headers=headers)
+    pprint(page.content)
+
+    pass
+
+def parseMandarake(url):
+
+    ok = webdriver.Chrome(ChromeDriverManager().install())
+
+    ok.implicitly_wait(10)
+    ok.get(url)
+    #sleep(10)
+
+    for request in ok.requests:
+        if request.url.find('getInfo') > 0:
+            info = request.response.body
+
+    pprint(info)
+    pos_tax = str(info).find('"price_with_tax":')
+    pos_price = str(info).find('"price":')
+    pos_segment = str(info).find(',"segment')
+
+
+    item = {}
+    item['priceYen'] = str(info)[pos_price+len('"price":'):pos_segment]
+    item['percentTax'] = int(str(info)[pos_tax+len('"price_with_tax":'):-2]) - int(item['priceYen'])
+    item['priceShipmt'] = 0
+    item['page'] = url
+    #item['mainPhoto'] = 'https://img.amiami.com'+js['item']['main_image_url']
+    item['siteName'] = 'Mandarake'
+    #item['name'] = js['item']['gname']
+
+    return item
+
+
+
 
 
 def getSiteName(url):
@@ -109,7 +186,7 @@ def getSiteName(url):
     '''
 
     name = re.findall('//[a-zA-Z0-9_.]+/', url)[0][2:-1]
-    name = name.replace('jp','').replace('com','').replace('www', '').replace('co', '').replace('.','')
+    name = name.replace('jp','').replace('com','').replace('www', '').replace('co', '').replace('order.', '').replace('.','')
     return name
 
 def getItemID(url):
@@ -125,11 +202,19 @@ def parseSite(url):
     if site == 'zenmarket':
         pass
     elif site == 'mercari':
-        item = parceMercariPage(url)
+        item = parseMercariPage(url)
     elif site == 'paypayfleamarketyahoo':
-        item = parcePayPay(url)
+        item = parsePayPay(url)
     elif site == 'pageauctionsyahoo':
         item = parseYahooAuctions(url)
+    elif site == 'amiami':
+        if url.find('/eng/')>0:
+            item = parseAmiAmiEng(url)
+        else:
+            item = parseAmiAmiJp(url)
+    elif site == 'mandarake':
+        item = parseMandarake(url)
+
 
     return item
 
@@ -139,7 +224,9 @@ def parseSite(url):
 #site = 'https://jp.mercari.com/item/m80929854346'
 #site = 'https://paypayfleamarket.yahoo.co.jp/item/z127729404'
 #site = 'https://www.amiami.com/eng/'
-site = 'https://page.auctions.yahoo.co.jp/jp/auction/h1052739834'
+#site = 'https://page.auctions.yahoo.co.jp/jp/auction/h1052739834'
+#site = 'https://page.auctions.yahoo.co.jp/jp/auction/x1053349147'
 #site = 'https://zenmarket.jp/ru/auction.aspx?itemCode=s1033560471'
-
-pprint(parseSite(site))
+site = 'https://order.mandarake.co.jp/order/detailPage/item?itemCode=1183713270&ref=list&keyword=Bratz&lang=en'
+#site = 'https://www.amiami.jp/top/detail/detail?gcode=GOODS-04242880&page=top'
+#pprint(parseSite(site))

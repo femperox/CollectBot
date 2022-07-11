@@ -307,7 +307,7 @@ class GoogleTabs:
         pprint(newParticipants)
 
         newParticipantColor = colors[payed]
-        newPayment = [newParticipantColor for i in range(4)]
+        newPayment = [newParticipantColor for i in range(5)]
 
         oldParticipants = add.concatList(self.getParticipantsList(namedRange), self.getPaymentAmount(namedRange))
         actualParticipants = []
@@ -317,6 +317,7 @@ class GoogleTabs:
         whiteCount = [x[1][1][2] for x in oldParticipants].count(c.white)
         if len(oldParticipants) == whiteCount:
             newPayment[2] = c.white
+            newPayment[3] = c.white
 
         paymentNew = []
         for new in newParticipants:
@@ -370,7 +371,7 @@ class GoogleTabs:
                 index = actualParticipantsNoItems[new[0][1]]
                 actualParticipants[index][0][0] = self.makeItemString(itemList)
             else:
-                actualParticipants.append([[self.makeItemString(itemList), new[0][1]], [['' for i in range(4)], newPayment]])
+                actualParticipants.append([[self.makeItemString(itemList), new[0][1]], [['' for i in range(5)], newPayment]])
 
         # позиции тех, у которых ничего неизменилось
         inactiveIndexes = set([i for i in range(len(oldParticipants))]) - activeIndexes

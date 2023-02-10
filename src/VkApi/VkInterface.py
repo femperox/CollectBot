@@ -229,7 +229,7 @@ class BoardBot:
         except:
             return -1
         
-    def _get_previous_attachments(self, topic_id: int, comm_id: int) -> str:
+    def _get_previous_attachments(self, topic_id: int, comm_id: int) -> tuple(str, list):
         """Получить старые вложения изменяемого комментария
 
         Args:
@@ -237,7 +237,7 @@ class BoardBot:
             comm_id (int): ID комментария
 
         Returns:
-            (str): Пустая строка или строка, содержащая вложения Вконтакте, разделённые запятыми
+            tuple(str, list): Пустая строка или строка, содержащая вложения Вконтакте, разделённые запятыми, и список, содержащий объекты размеров изображений
         """
         result = ''
         result_urls = []
@@ -495,11 +495,13 @@ class BoardBot:
                     id = re.findall('vk.com/(\S+)', user[1])[0]
                     text = text.replace('https://'+url, '[{0}|{1}]'.format(id, user[0]))
 
+                attachments = self._get_previous_attachments(topic_id, comment['id'])
                 params_edit = {
                     'group_id': self.__group_id,
                     'topic_id': topic_id,
                     'comment_id': comment['id'],
-                    'message': text
+                    'message': text,
+                    'attachments': attachments
                 }
 
                 self.vk.board.editComment(**params_edit)
@@ -587,11 +589,13 @@ class BoardBot:
         text = old_text[:start_part] + text + old_text[end_part:]
 
         topic_id = self._get_topic_by_name(what_to_find["topic_name"])
+        attachments = self._get_previous_attachments(topic_id, comment['id'])
         params_edit = {
             'group_id': self.__group_id,
             'topic_id': topic_id,
             'comment_id': comment['id'],
-            'message': text
+            'message': text,
+            'attachments': attachments
         }
 
         self.vk.board.editComment(**params_edit)
@@ -633,11 +637,13 @@ class BoardBot:
             text = text[:participants_start_part] + payment + text[participants_end_part:]
 
         topic_id = self._get_topic_by_name(what_to_find["topic_name"])
+        attachments = self._get_previous_attachments(topic_id, comment['id'])
         params_edit = {
             'group_id': self.__group_id,
             'topic_id': topic_id,
             'comment_id': comment['id'],
-            'message': text
+            'message': text,
+            'attachments': attachments
         }
 
         try:
